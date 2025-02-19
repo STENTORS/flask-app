@@ -111,7 +111,7 @@
 					<a href="home" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
 						<span style="font-size:30px;">&#11160;</span>
 					</a>
-					<form method="POST">
+					<form method="POST" id="booking-form">
 						<div class="child">
 							<div class="box">
 								<div class="formbox">
@@ -157,15 +157,27 @@
 								</div>
 							</div>
 						</div>
+					
 						<div class="child-below">
 							<div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
-								<button type="submit">submit</button>
+								<button form="booking-form" type="submit">submit</button>
+							</div>
+
+
+							<div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
+								<button onclick="window.location.href='/trip'">New Trip</button>
 							</div>
 						</div>
+
 					</form>
+						
+					
+					
+				
 					<a href="lookup" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
 						<span style="font-size:30px;">&#11162;</span>
 					</a>
+					
 				</div>
 				{% if msg %}
 					<div class="alert-box">

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style.css"> 
+	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+
+<body>
+
+	<div class="grandparent">
+	
+		<div class="parent title">
+			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+		</div>
+		
+		<div class="parent">
+			
+			<div class="tab-row">
+			
+				
+				<div class="tab">
+					<a href="home">
+						<p>Customer Details</p>
+					</a>
+				</div>
+				
+				<div class="active-tab active-middle-tab">
+					<p>Booking Details</p>
+				</div>
+				
+				<div class="tab">
+					<a href="lookup">
+						<p>Details Lookup</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="admin">
+						<p>Admin Access</p>
+					</a>
+				</div>
+				
+			</div>
+			
+			<!--form boxes-->
+			<div class="child" style="border-radius: 20px 0px 20px 20px;">
+				<div class="box">
+					
+					
+						<form method="POST" action="/newTrip">
+
+							<div class="formbox" style="width: auto;">
+								<label for="destination">Destination</label>
+								<select id="destination" name="destination" required>
+									{% for i in destinations %}
+										<option value="{{i['DestinationID']}}">{{i['Destination']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="driver">Driver</label>
+								<select id="driver" name="driver" required>
+									{% for i in driver %}
+										<option value="{{i['DriverID']}}">{{i['Driver']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="date">Date</label>
+								<input type="date" id="date" name="date" min="2018-01-01" required/>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="coach">Coach</label>
+								<select id="coach" name="coach" required>
+									{% for i in coach %}
+										<option value="{{i['coachID']}}">{{i['Registration']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+							
+							<button style="padding: 0.5em; border-radius: 10px;" type="submit">Add Trip</button>
+							
+
+						</form>
+						
+						{% if msg %}
+							<div class="alert-box">
+								<p>{{ msg }}</p>
+								<a href="?dismiss=true" class="close-btn">x</a>
+							</div>
+						{% endif %}
+			
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>	  
+</body>
+</html>

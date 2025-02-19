@@ -4,6 +4,7 @@ import MySQLdb.cursors
 import secrets
 import re
 import geonamescache
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -93,6 +94,54 @@ def admin():
             print(msg)
     return render_template("admin_tab.html", title="Admin Login",msg=msg)
 
+@app.route("/trip", methods=['GET', 'POST'])
+def trip():
+    msg = None
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        cursor.execute("SHOW TABLES")
+        tables = cursor.fetchall()
+
+
+        cursor.execute(f'SELECT DestinationID, Destination FROM destination;')
+        destinations = cursor.fetchall()
+        
+        cursor.execute(f'SELECT * FROM driver;')
+        driver = cursor.fetchall()
+
+        cursor.execute(f'SELECT * FROM coach;')
+        coach = cursor.fetchall()
+
+        return render_template("new_trip.html",
+                                title="New Trip",
+                                tables=tables,
+                                destinations=destinations, 
+                                driver=driver, 
+                                coach=coach)
+    finally:
+        cursor.close()
+
+@app.route("/newTrip", methods=['GET', 'POST'])
+def newTrip():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    destination = request.form.get('destination')
+    driver = request.form.get('driver')
+    date = request.form.get('date')
+    coach = request.form.get('coach')
+    
+    try:
+        date = datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+        query = "INSERT INTO trip (DestinationID, DriverID, Date, CoachID) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (destination, driver, date, coach))
+
+        mysql.connection.commit()
+        msg = "Trip Added"
+    except:
+        print("Error")
+
+    return redirect(url_for('booking'))
+
 
 @app.route("/access", methods=['GET', 'POST'])
 def access():
@@ -165,6 +214,7 @@ def addTrip():
 
     
     try:
+        date = datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
         query = "INSERT INTO trip (DestinationID, DriverID, Date, CoachID) VALUES (%s, %s, %s, %s)"
         cursor.execute(query, (destination, driver, date, coach))
 
