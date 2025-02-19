@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style.css"> 
+	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+
+<body>
+
+	<div class="grandparent">
+	
+		<div class="parent title">
+			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+		</div>
+		
+		<div class="parent">
+			
+			<div class="tab-row">
+			
+				
+				<div class="tab">
+					<a href="home">
+						<p>Customer Details</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="booking">
+						<p>Booking Details</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="lookup">
+						<p>Details Lookup</p>
+					</a>
+				</div>
+				
+				<div class="active-tab" style="margin-left:0.5em;">
+					<p>Admin Access</p>
+				</div>
+				
+			</div>
+			
+			<!--form boxes-->
+			<div class="child" style="border-radius: 20px 0px 20px 20px;">
+				<div class="box">
+					<div class="formbox" style="width: auto;">
+						<form method="post" action="/action">
+							<button type="submit" name="adminAction" value="edit" class="tablinks">Edit</button>
+							<button type="submit" name="adminAction" value="finance" class="tablinks">Finance</button>
+							<button type="submit" name="adminAction" value="trip" class="tablinks">Trip</button>
+						</form>
+						
+					</div>
+			
+
+					
+					<div class="child" style="align-items: center;">
+						<!-- Finance Admin Dasboard -->
+						{% if adminAction == "finance" %}
+							<div class="formbox"></div>
+
+						<!-- New trip input -->
+						{% elif adminAction == "trip" %}
+						<form method="POST" action="/addTrip">
+
+							<div class="formbox" style="width: auto;">
+								<label for="destination">Destination</label>
+								<select id="destination" name="destination" required>
+									{% for i in destinations %}
+										<option value="{{i['DestinationID']}}">{{i['Destination']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="driver">Driver</label>
+								<select id="driver" name="driver" required>
+									{% for i in driver %}
+										<option value="{{i['DriverID']}}">{{i['Driver']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="date">Date</label>
+								<input type="date" id="date" name="date" min="2018-01-01" required/>
+							</div>
+
+							<div class="formbox" style="width: auto;">
+								<label for="coach">Coach</label>
+								<select id="coach" name="coach" required>
+									{% for i in coach %}
+										<option value="{{i['coachID']}}">{{i['Registration']}}</option>
+									{% endfor %}
+								</select>
+							</div>
+							
+							<button style="padding: 0.5em; border-radius: 10px;" type="submit">Add Trip</button>
+							
+
+						</form>
+						
+						
+						{% elif adminAction == "edit" %}
+							<div class="box">
+								<form method="post">
+									<div class="formbox">
+										<select id="tableSelect" name="tableSelect" style="width: max-content;" onchange="this.form.submit()">
+											{% for table in tables %}
+												{% if request.form.get('doWhat', 'add') == "add" %}
+													{% if table['Tables_in_silerdawncoachesdb'] != "trip" and table['Tables_in_silerdawncoachesdb'] != "booking" and table['Tables_in_silerdawncoachesdb'] != "customer" %}
+														<option value="{{ table['Tables_in_silerdawncoachesdb'] }}"
+															{% if table['Tables_in_silerdawncoachesdb'] == request.form.get('tableSelect', '') %}selected{% endif %}>
+															{{ table['Tables_in_silerdawncoachesdb'] }}
+														</option>
+													{% endif %}
+												{% else %}
+													<option value="{{ table['Tables_in_silerdawncoachesdb'] }}"
+														{% if table['Tables_in_silerdawncoachesdb'] == request.form.get('tableSelect', '') %}selected{% endif %}>
+														{{ table['Tables_in_silerdawncoachesdb'] }}
+												</option>
+												{% endif %}
+
+											{% endfor %}
+										</select>
+									
+										<select id="doWhat" name="doWhat" style="width: max-content;" onchange="this.form.submit()">
+											<option value="add" {% if request.form.get('doWhat', '') == 'add' %}selected{% endif %}>Add</option>
+											<option value="remove" {% if request.form.get('doWhat', '') == 'remove' %}selected{% endif %}>Remove</option>
+										</select>
+									</div>
+								</form>
+							
+								{% if action == "add" %}
+									
+									<form method="POST" action="add">
+										{% for i in attributes %}
+											{% if i != 0 %}
+												<div class="formbox">
+													<label for="{{i['Field']}}">{{i['Field']}}</label>
+													
+													<input type="text" id="{{i['Field']}}" name="{{i['Field']}}">
+												</div>
+											{% endif %}
+										{% endfor %}
+
+										<div class="child-below">
+											<div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
+												<button type="submit">submit</button>
+											</div>
+										</div>
+									
+									</form>
+								
+								{% elif action == "remove" %}
+
+									<div class="child" style="border-radius: 20px; width: 100%; flex-direction: column;">
+										<div class="tableContainer">
+											<table id="data-table">
+												<thead>
+													<tr>
+														{% if displayData %}
+															{% for key in displayData[0].keys() %}
+																<th>{{ key }}</th>
+															{% endfor %}
+														{% endif %}
+														<th>Remove</th>
+													</tr>
+												</thead>
+												<tbody>
+													{% if displayData %}
+														{% for num in range(0, amountOfData) %}
+															<tr data-id="{{ displayData[num]['id'] }}">
+																{% for i in displayData[num].values() %}
+																	{% if i %}
+																		<td>{{ i }}</td>
+																	{% else %}
+																		<td>No Data</td>
+																	{% endif %}
+																{% endfor %}
+																<td>
+																	<form method="get" action="delete">
+																		<input type="hidden" name="id" value="{{ displayData[num].values()|list|first }}">
+																		<button action="submit">
+																			<span style='font-size:27px; cursor: pointer;'>&#128465;</span>
+																		</button>
+																		
+																	</form>
+																</td>
+															</tr>
+														{% endfor %}
+													{% endif %}
+												</tbody>
+											</table>
+										</div>			
+									{% endif %}
+								</div>
+							{% endif %}
+						</div>
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>	  
+</body>
+</html>

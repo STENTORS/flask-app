@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style.css"> 
+	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+
+	<div class="grandparent">
+	
+	
+		<div class="parent title">
+			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+		</div>
+		
+		<div class="parent">
+			
+			<div class="tab-row">
+			
+				
+				<div class="active-tab" style="margin-right:0.5em;">
+					<p>Customer Details</p>
+				</div>
+				
+				<div class="tab">
+					<a href="booking">
+						<p>Booking Details</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="lookup">
+						<p>Details Lookup</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="admin">
+						<p>Admin Access</p>
+					</a>
+				</div>
+			</div>
+			
+			<!--form boxes-->
+			<form method="POST">
+				<div class="child">
+					<a class="arrow-button" >
+						<span style='font-size:30px; color: #385D3D; margin-left: 0.4em;'>&#11160;</span>
+					</a>
+					
+
+					<div class="box">
+						<div class="formbox">
+							<label for="fname">First name:</label>
+							<input type="text" id="fname" name="fname" required>
+						</div>
+						
+						<div class="formbox">
+							<label for="lname">Last name:</label><br>
+							<input type="text" id="lname" name="lname" required><br>
+						</div>
+						
+						<div class="formbox">
+							<label for="email">Email Add:</label><br>
+							<input type="email" id="email" name="email" required>
+						</div>
+						
+						<div class="formbox">
+							<label for="phone">Phone No.:</label><br>
+							<input type="text" id="phone" name="phone" required>
+						</div>
+					</div>
+					
+					<div class="vl"></div>
+
+					<div class="box">
+						
+						<div class="formbox">
+							<label for="city">City:</label>
+							<input type="text" id="city" name="city" required>
+						</div>
+						
+						<div class="formbox">
+							<label for="lname">Address1:</label><br>
+							<input type="text" id="address1" name="address1" required><br>
+						</div>
+						
+						<div class="formbox">
+							<label for="address2">Address2:</label><br>
+							<input type="text" id="address2" name="address2"><br>
+						</div>
+						
+						<div class="formbox">
+							<label for="postcode">Postcode:</label><br>
+							<input type="text" id="postcode" name="postcode" required><br>
+						</div>
+
+					</div>
+					
+					<a href="booking" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+						<span style='font-size:30px;'>&#11162;</span>
+					</a>
+				</div>
+
+				<div class="child-below">
+					<div class="notes-box">
+						<div class="child-below">
+							<div class="formbox" style="padding: 0.5em; width: auto;">
+								<label for="noteCheck">Extra Notes:</label><br>
+								<input type="checkbox" class="checkmark" id="noteCheck" name="noteCheck"><br>
+							</div>
+						
+							<div class="formbox" style="margin-left: 1em; padding: 0.5em; width: auto;">
+								<button type="submit">submit</button>
+							</div>
+						</div>
+					
+						<div class="formbox" id="notesContainer" style="display: none; width: auto;">
+							<label for="notes">Notes:</label><br>
+							<input type="text" id="notes" name="notes"><br>
+						</div>
+					</div>
+				</div>
+
+				{% if msg %}
+					<div class="alert-box">
+						<p>{{ msg }}</p>
+						<a href="?dismiss=true" class="close-btn">x</a>
+					</div>
+				{% endif %}
+
+				<script>
+					const checkbox = document.getElementById('noteCheck');
+					const notesContainer = document.getElementById('notesContainer');
+				
+					checkbox.addEventListener('change', () => {
+						notesContainer.style.display = checkbox.checked ? 'block' : 'none';
+					});
+				</script>
+				
+			</form>
+
+
+		</div>
+	
+	</div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style.css"> 
+	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+
+<body>
+
+	<div class="grandparent">
+	
+		<div class="parent title">
+			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+		</div>
+		
+		<div class="parent">
+			
+			<div class="tab-row">
+			
+				<div class="tab">
+					<a href="home">
+						<p>Customer Details</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="booking">
+						<p>Booking Details</p>
+					</a>
+				</div>
+				
+				<div class="active-tab active-middle-tab">
+					<p>Details Lookup</p>
+				</div>
+				
+				<div class="tab">
+					<a href="admin">
+						<p>Admin Access</p>
+					</a>
+				</div>
+	
+			</div>
+			
+			<!--form boxes-->
+			<div class="child" style="border-radius: 20px 20px 20px 20px; flex-direction: row;">
+				
+				<a href="booking" class="arrow-button" style="color: #C1C1C1;">
+					<span style='font-size:30px;'>&#11160;</span>
+				</a>
+
+				<div class="box">
+
+					
+					<form method="get">
+						<div class="formbox">
+							
+							<select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
+								{% for col in tableList %}
+									<option value="{{ col['Tables_in_silerdawncoachesdb'] }}"
+										{% if col['Tables_in_silerdawncoachesdb'] == request.args.get('tableSelect', 'customer') %}
+											selected
+										{% endif %}>
+										{{ col['Tables_in_silerdawncoachesdb'] }}
+									</option>
+								{% endfor %}
+							</select>
+					
+							<!-- Column Select -->
+							<select id="columnSelect" name="columnSelect" onchange="this.form.submit()">
+								<option value="" selected disabled>Select</option>
+								{% for col in columnList %}
+									<option value="{{ col['Field'] }}"
+										{% if col['Field'] == request.args.get('columnSelect') %}
+											selected
+										{% endif %}>
+										{{ col['Field'] }}
+									</option>
+								{% endfor %}
+							</select>
+					
+							<!-- Search Field -->
+							<input type="text" id="dataSelect" name="dataSelect" placeholder="Search">
+						</div>
+					</form>
+					
+					<div class="child" style="border-radius: 20px; width: 100%;">
+						<div class="tableContainer">
+							<table>
+								<thead>
+									<tr>
+										{% if displayData %}
+											{% for key in displayData[0].keys() %}
+												<th>{{key}}</th>
+											{% endfor %}
+										{% endif %}
+									</tr>
+								</thead>
+
+								<tbody>
+									{% if displayData %}
+										{% for num in range(0,amountOfData) %}
+											<tr>
+												{% for i in displayData[num].values() %}
+													{% if i %}
+														<td>{{ i }}</td>
+													{% else %}
+														<td>No Data</td>
+													{% endif %}
+												{% endfor %}
+											</tr>
+										{% endfor %}
+									{% endif %}
+									
+								</tbody>
+							</table>
+						</div>
+
+						<a href="admin" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+							<span style='font-size:30px;'>&#11162;</span>
+						</a>
+						
+					</div>
+				
+					
+				</div>
+				
+			</div>
+			
+		</div>
+
+		
+
+		
+	
+	</div>
+</body>
+</html>

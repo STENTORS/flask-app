@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="static/style.css">
+		<link href="https://fonts.googleapis.com/css?family=Livvic" rel="stylesheet">
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+	</head>
+	<body>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				let isUpdating = false;
+				
+				// Updates the date dropdown based on the selected trip.
+				function updateDateDropdown(tripId, callback) {
+					fetch(`/get_dates/${tripId}`)
+						.then(response => response.json())
+						.then(data => {
+							let dateDropdown = document.getElementById("date");
+							isUpdating = true;
+							dateDropdown.innerHTML = "";
+							data.dates.forEach(date => {
+								let option = document.createElement("option");
+								option.value = date;
+								option.textContent = date;
+								dateDropdown.appendChild(option);
+							});
+							// Auto-select the first available date.
+							if (dateDropdown.options.length > 0) {
+								dateDropdown.selectedIndex = 0;
+							}
+							if (callback) callback();
+							isUpdating = false;
+						})
+						.catch(error => console.error("Error fetching dates:", error));
+				}
+				
+				// Updates the trip dropdown based on the selected date.
+				function updateTripDropdown(selectedDate, callback) {
+					fetch(`/get_trip_by_date/${selectedDate}`)
+						.then(response => response.json())
+						.then(data => {
+							if (data.tripId) {
+								let tripDropdown = document.getElementById("trip");
+								isUpdating = true;
+								tripDropdown.value = data.tripId;
+								if (callback) callback();
+								isUpdating = false;
+							}
+						})
+						.catch(error => console.error("Error fetching trip:", error));
+				}
+
+				function updateSeats(tripId) {
+					fetch(`/get_seats/${tripId}`)
+						.then(response => response.json())
+						.then(data => {
+							document.getElementById("seatId").textContent = `Available Seats: ${data.seats}`;
+							document.getElementById("seats").max = data.seats; // Update max limit dynamically
+						})
+						.catch(error => console.error("Error fetching seats:", error));
+				}
+
+				document.getElementById("trip").addEventListener("change", function () {
+					if (isUpdating) return;
+					let tripId = this.value;
+					updateDateDropdown(tripId);
+					updateSeats(tripId);
+				});
+
+				
+				// Event listener for date changes.
+				document.getElementById("date").addEventListener("change", function () {
+					if (isUpdating) return;
+					let selectedDate = this.value;
+					updateTripDropdown(selectedDate);
+				});
+
+				
+			});
+		</script>
+		
+		<div class="grandparent">
+			<div class="parent title">
+				<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+			</div>
+			<div class="parent">
+				<div class="tab-row">
+					<div class="tab">
+						<a href="home">
+							<p>Customer Details</p>
+						</a>
+					</div>
+					<div class="active-tab active-middle-tab">
+						<p>Booking Details</p>
+					</div>
+					<div class="tab">
+						<a href="lookup">
+							<p>Details Lookup</p>
+						</a>
+					</div>
+					<div class="tab">
+						<a href="admin">
+							<p>Admin Access</p>
+						</a>
+					</div>
+				</div>
+				<!-- form boxes -->
+				<div class="child" style="border-radius: 20px;">
+					<a href="home" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+						<span style="font-size:30px;">&#11160;</span>
+					</a>
+					<form method="POST">
+						<div class="child">
+							<div class="box">
+								<div class="formbox">
+									<label for="name">Customer Name:</label>
+									<select id="name" name="name">
+										{% for name in names %}
+											<option value="{{ name['CustomerID'] }}">{{ name['First Name'] }} {{ name['Surname'] }}</option>
+										{% endfor %}
+									</select>
+								</div>
+								<div class="formbox">
+									<label for="trip">Trip Select:</label>
+									<select id="trip" name="trip">
+										{% for trip in destinations %}
+											<option value="{{ trip['DestinationID'] }}">{{ trip['Destination'] }}</option>
+										{% endfor %}
+									</select>
+								</div>
+								<div class="formbox">
+									<label for="date">Trip Date:</label><br>
+									<select id="date" name="date">
+										{% if date %}
+											{% for date in date %}
+												<option value="{{ date['Date'] }}">{{ date['Date'] }}</option>
+											{% endfor %}
+										{% endif %}
+									</select>
+								</div>
+							</div>
+							<div class="vl"></div>
+							<div class="box">
+								<div class="formbox">
+									<label for="notes">Extra Notes:</label><br>
+									<input type="text" id="notes" name="notes"><br>
+								</div>
+								<div class="formbox">
+									<label for="seats">No. Seats:</label>
+									<input type="number" id="seats" name="seats" min="1" max="{{ seats }}" required><br>
+								</div>
+
+								<div class="formbox">
+									<label for="seats" id="seatId">Available Seats: </label>
+								</div>
+							</div>
+						</div>
+						<div class="child-below">
+							<div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
+								<button type="submit">submit</button>
+							</div>
+						</div>
+					</form>
+					<a href="lookup" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+						<span style="font-size:30px;">&#11162;</span>
+					</a>
+				</div>
+				{% if msg %}
+					<div class="alert-box">
+						<p>{{ msg }}</p>
+						<a href="?dismiss=true" class="close-btn">x</a>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style.css"> 
+	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+
+<body>
+
+	<div class="grandparent">
+		<div class="parent title">
+			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
+		</div>
+		
+		<div class="parent">
+			
+			<div class="tab-row">
+			
+				<div class="tab">
+					<a href="home">
+						<p>Customer Details</p>
+					</a>
+				</div>
+		
+				<div class="tab">
+					<a href="booking">
+						<p>Booking Details</p>
+					</a>
+				</div>
+				
+				<div class="tab">
+					<a href="lookup">
+						<p>Details Lookup</p>
+					</a>
+				</div>
+				
+				<div class="active-tab" style="margin-left:0.5em;">
+					<p>Admin Access</p>
+				</div>
+				
+			</div>
+			
+			<!--form boxes-->
+			<div class="child" style="border-radius: 20px 0px 20px 20px;">
+
+				<a href="lookup" class="arrow-button" style="color: #C1C1C1;">
+					<span style='font-size:30px;'>&#11160;</span>
+				</a>
+
+				<div class="box" style="padding:40px;">
+				
+					<div class="parent" style=" width:60%; margin-left:10em;margin-right:10em; padding:8px; display:flex; align-items: center;">
+						<h2>Admin Dashboard</h2>
+						<form method="post" style="font-size:25px;" onsubmit="login(event, this)">
+						
+							<div class="formbox" style="background-color:#839B85; margin-left:2em; margin-right:2em;">
+								<label for="username">Username:</label>
+								<input style="border:2px solid #373737;" type="text" id="username" name="username">
+							</div>
+							
+							<div class="formbox" style="background-color:#839B85; margin-left:2em; margin-right:2em;">
+								<label for="password">Password:</label><br>
+								<input style="border:2px solid #373737;" type="text" id="password" name="password"><br>
+							</div>
+							
+							<input style="border:2px solid #373737; margin-bottom:1em;width:30%;" type="submit" value="Submit">
+							
+						</form>
+					</div>
+				</div>
+				{% if msg %}
+					<div class="alert-box">
+						<p>{{ msg }}</p>
+						<a href="?dismiss=true" class="close-btn">x</a>
+					</div>
+				{% endif %}
+					
+			</div>
+
+	</div>
+</body>
+</html>
