@@ -63,7 +63,42 @@
 					<div class="child" style="align-items: center;">
 						<!-- Finance Admin Dasboard -->
 						{% if adminAction == "finance" %}
-							<div class="formbox"></div>
+						<div class="box">
+							<div class="formbox">
+								
+								<label>Select Trip</label>
+								<form action="/finance" method="post">
+
+									<select id="trip_fin" name="trip_fin" onchange="this.form.submit()">
+										{% for name in destinations %}
+											<option value="{{name['TripID']}}">{{name['Destination']}} | {{name['Date']}}</option>
+										{% endfor %}
+									</select>
+								</form>
+							</div>
+							<div class="child">
+								<div class="formbox">
+									<table>
+										<thead>
+											<tr>
+												<th></th>
+												<th>Trip Data</th>
+											</tr>
+										</thead>
+										<tbody>
+											{% for key, value in finData.items() %}
+											<tr>
+												<td> {{ key }} </td>
+												<td> {{ value }} </td>
+											</tr>
+											{% endfor %}
+										</tbody>
+									</table>
+								</div>
+							</div>
+							
+						</div>
+							
 
 						<!-- New trip input -->
 						{% elif adminAction == "trip" %}
