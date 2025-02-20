@@ -11,33 +11,40 @@
 		<script>
 			document.addEventListener("DOMContentLoaded", function () {
 				let isUpdating = false;
-				
+				let userSelectedDate = false;
+
 				// Updates the date dropdown based on the selected trip.
-				function updateDateDropdown(tripId, callback) {
+				function updateDateDropdown(tripId) {
 					fetch(`/get_dates/${tripId}`)
 						.then(response => response.json())
 						.then(data => {
 							let dateDropdown = document.getElementById("date");
+							let previousSelection = dateDropdown.value;
+
 							isUpdating = true;
 							dateDropdown.innerHTML = "";
+
 							data.dates.forEach(date => {
 								let option = document.createElement("option");
 								option.value = date;
 								option.textContent = date;
 								dateDropdown.appendChild(option);
 							});
-							// Auto-select the first available date.
-							if (dateDropdown.options.length > 0) {
+
+							// Restore previous selection if it exists, otherwise default to the first
+							if (userSelectedDate && data.dates.includes(previousSelection)) {
+								dateDropdown.value = previousSelection;
+							} else if (dateDropdown.options.length > 0) {
 								dateDropdown.selectedIndex = 0;
 							}
-							if (callback) callback();
+
 							isUpdating = false;
 						})
 						.catch(error => console.error("Error fetching dates:", error));
 				}
-				
+
 				// Updates the trip dropdown based on the selected date.
-				function updateTripDropdown(selectedDate, callback) {
+				function updateTripDropdown(selectedDate) {
 					fetch(`/get_trip_by_date/${selectedDate}`)
 						.then(response => response.json())
 						.then(data => {
@@ -45,7 +52,6 @@
 								let tripDropdown = document.getElementById("trip");
 								isUpdating = true;
 								tripDropdown.value = data.tripId;
-								if (callback) callback();
 								isUpdating = false;
 							}
 						})
@@ -69,16 +75,15 @@
 					updateSeats(tripId);
 				});
 
-				
-				// Event listener for date changes.
 				document.getElementById("date").addEventListener("change", function () {
 					if (isUpdating) return;
 					let selectedDate = this.value;
 					updateTripDropdown(selectedDate);
 				});
-
-				
 			});
+
+			
+
 		</script>
 		
 		<div class="grandparent">
@@ -129,6 +134,8 @@
 											<option value="{{ trip['DestinationID'] }}">{{ trip['Destination'] }}</option>
 										{% endfor %}
 									</select>
+
+									
 								</div>
 								<div class="formbox">
 									<label for="date">Trip Date:</label><br>

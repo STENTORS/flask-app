@@ -71,11 +71,24 @@
 
 									<select id="trip_fin" name="trip_fin" onchange="this.form.submit()">
 										{% for name in destinations %}
-											<option value="{{name['TripID']}}">{{name['Destination']}} | {{name['Date']}}</option>
+											<option value="{{name['DestinationID']}}">{{name['Destination']}}</option>
 										{% endfor %}
 									</select>
 								</form>
 							</div>
+							
+							<div class="formbox">
+								<label>Select Date</label>
+								<form action="/finance" method="post">
+									<select id="fin_date" name="fin_date" onchange="this.form.submit()">
+										{% for name in destinations %}
+											<option value="{{name['Date']}}">{{name['Date']}}</option>
+										{% endfor %}
+									</select>
+								</form>
+							</div>
+								
+							
 							<div class="child">
 								<div class="formbox">
 									<table>
