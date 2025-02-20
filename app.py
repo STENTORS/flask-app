@@ -370,6 +370,14 @@ def finance():
 
         return redirect("/access")
 
+@app.route('/financeDate', methods=['GET', 'POST'])
+def financeDate():
+    if request.method == "POST":
+        dateFin = request.form.get("fin_date")
+        session['dateFin'] = dateFin
+        
+    return redirect("access")
+    
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():

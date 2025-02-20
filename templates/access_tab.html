@@ -76,10 +76,10 @@
 									</select>
 								</form>
 							</div>
-							
+
 							<div class="formbox">
 								<label>Select Date</label>
-								<form action="/finance" method="post">
+								<form action="/financeDate" method="post">
 									<select id="fin_date" name="fin_date" onchange="this.form.submit()">
 										{% for name in destinations %}
 											<option value="{{name['Date']}}">{{name['Date']}}</option>
