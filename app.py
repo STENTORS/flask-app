@@ -172,26 +172,33 @@ def access():
                                     coach=coach)
         
         if adminAction == "finance":
+            cursor.execute("SELECT * FROM silerdawncoachesdb.destination")
+            financeArray = cursor.fetchall()
+            print(financeArray)
 
-            cursor.execute('''
-                SELECT * 
-                FROM trip
-                JOIN destination WHERE trip.DestinationID = destination.DestinationID;
-            ''')
-            destinations = cursor.fetchall()
-            try:
-                finData = session.pop('finData')
-                print(finData)
-            except:
-                finData = {}
+            finaceTrip = session.get('finaceTrip')
+            finaceDates = session.get('finaceDates')
 
+            cursor.execute(f'SELECT Destination FROM destination WHERE %s = DestinationID', (finaceTrip,))
+            finaceTrip = cursor.fetchone()
+
+            if finaceDates:
+                
+                print("DATES", finaceDates)
+                print("TRIP", finaceTrip)
+                return render_template("access_tab.html",
+                                    title="Admin | Edit",
+                                    tables=tables,
+                                    adminAction=adminAction, 
+                                    financeArray = financeArray,
+                                    finaceDates = finaceDates,
+                                    finaceTrip = finaceTrip)
 
             return render_template("access_tab.html", 
                                    title="Admin | Edit", 
                                    tables=tables, 
                                    adminAction=adminAction, 
-                                   destinations = destinations, 
-                                   finData=finData)
+                                   financeArray = financeArray)
 
         if request.method == "POST":
             tableForm = request.form.get("tableSelect")
@@ -317,67 +324,66 @@ def delete():
 @app.route('/finance', methods=['GET', 'POST'])
 def finance():
     if request.method == "POST":
-        tripId = request.form.get("trip_fin")
-        
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        print(tripId)
-
         cursor.execute('''
-            SELECT *
-            FROM trip
-            JOIN destination ON destination.DestinationID = trip.DestinationID
-            WHERE trip.TripID = %s;
-        ''', (tripId,))
+            SELECT * FROM silerdawncoachesdb.destination
+        ''')
+        financeArray = cursor.fetchall()
+        print(financeArray)
+        finaceTrip = request.form.get("finaceTrip")
 
-        tripDest = cursor.fetchall()
+        cursor.execute("SELECT Date FROM silerdawncoachesdb.trip where %s = trip.DestinationID", (finaceTrip,))
+        finaceDates = cursor.fetchall()
+        print("TRIP", finaceTrip)
+        print("DATES", finaceDates)
+
+        session['finaceDates'] = finaceDates
+        session['finaceTrip'] = finaceTrip
+        return redirect("/access")
+
+@app.route('/dateFinance', methods=['GET', 'POST'])
+def dateFinance():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == "POST":
+        finaceDate = request.form.get("finaceDate")
+        session['finaceDate'] = finaceDate 
+
+        financeTrip = session.get('finaceTrip')
         
-        #get the number of people from a sepcific trip ID
+        # Get the number of people from a specific trip ID
         cursor.execute('''
             SELECT booking.`Number of people`
             FROM booking
             JOIN trip ON booking.TripID = trip.TripID
-            WHERE trip.TripID = %s;
-        ''', (tripId,))
+            WHERE trip.TripID = %s AND trip.Date = %s;
+        ''', (financeTrip, finaceDate))
         bookings = cursor.fetchall()
-        seats = 0
-        for i in bookings:
-            seats += i['Number of people']
-        
-        for i in tripDest:
-            name = i['Destination']
-            costs = i['Cost']
-            date = i['Date']
-            hotel = i['Hotel']
-            days = i['Days']
-            
-        
-        print(f"TRIP AND DEST: {tripDest}")
-
-        totalProfit = costs * seats
-        finData = {'Trip Name' : name,
-                    'Date' : date,
-                   'Cost Per Seat' : costs, 
-                   'Seats Booked' : seats,
-                   'Profit' : totalProfit, 
-                   'Days' : days, 
-                   'Hotel' : hotel}
-        
-        session['finData'] = finData
-
-        #get the costs of a trip from Costs in Destinations 
-
-        #return the amount of peope and people*costs
-
+        seats = sum(i['Number of people'] for i in bookings)
+       
+        print(bookings)
+  
         return redirect("/access")
+
+@app.route('/get_trips/<destination_id>', methods=['GET'])
+def get_trips(destination_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT TripID, Date FROM trip WHERE DestinationID = %s", (destination_id,))
+    trips = cursor.fetchall()
+    return {'trips': trips}
+
+@app.route('/get_dates/<trip_id>', methods=['GET'])
+def get_dates(trip_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT Date FROM trip WHERE TripID = %s", (trip_id,))
+    dates = cursor.fetchall()
+    return {'dates': [date['Date'] for date in dates]}
 
 @app.route('/financeDate', methods=['GET', 'POST'])
 def financeDate():
     if request.method == "POST":
-        dateFin = request.form.get("fin_date")
-        session['dateFin'] = dateFin
-        
-    return redirect("access")
-    
+        date = request.form.get("date_fin")
+        session['date'] = date  # Store date in session
+
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
@@ -435,14 +441,6 @@ def booking():
                            seats=available_seats,
                            msg=msg,
                            trip=trip)
-
-
-@app.route('/get_dates/<trip_id>', methods=['GET', 'POST'])
-def get_dates(trip_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT Date FROM trip WHERE DestinationID = %s", (trip_id,))
-    dates = cursor.fetchall()
-    return {'dates': [date['Date'] for date in dates]}
 
 
 @app.route('/get_trip_by_date/<path:trip_date>', methods=['GET', 'POST'])
