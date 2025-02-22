@@ -176,30 +176,21 @@ def access():
             financeArray = cursor.fetchall()
 
             finaceTrip = session.get('finaceTrip')
-            finaceDates = session.get('finaceDates')
+            finData = session.get('finData')
+            total_seats_booked = session.get('total_seats_booked')
+            percentage_seats_booked = session.get('percentage_seats_booked')
+            total_revenue = session.get('total_revenue')
 
-            cursor.execute(f'SELECT Destination FROM destination WHERE %s = DestinationID', (finaceTrip,))
-            finaceTrip = cursor.fetchone()
-
-            if finaceDates:
-                finData = session.get('finData')
-                
-                print("DATES", finaceDates)
-                print("TRIP", finaceTrip)
-                return render_template("access_tab.html",
-                                    title="Admin | Edit",
-                                    tables=tables,
-                                    adminAction=adminAction, 
-                                    financeArray = financeArray,
-                                    finaceDates = finaceDates,
-                                    finaceTrip = finaceTrip,
-                                    finData = finData,)
-
-            return render_template("access_tab.html", 
-                                   title="Admin | Edit", 
-                                   tables=tables, 
+            return render_template("access_tab.html",
+                                   title="Admin | Edit",
+                                   tables=tables,
                                    adminAction=adminAction, 
-                                   financeArray = financeArray)
+                                   financeArray=financeArray,
+                                   finaceTrip=finaceTrip,
+                                   finData=finData,
+                                   total_seats_booked=total_seats_booked,
+                                   percentage_seats_booked=percentage_seats_booked,
+                                   total_revenue=total_revenue)
 
         if request.method == "POST":
             tableForm = request.form.get("tableSelect")
@@ -325,94 +316,78 @@ def delete():
 @app.route('/finance', methods=['GET', 'POST'])
 def finance():
     if request.method == "POST":
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('''
-            SELECT * FROM silerdawncoachesdb.destination
-        ''')
-        financeArray = cursor.fetchall()
-
         finaceTrip = request.form.get("finaceTrip")
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        cursor.execute("SELECT Date FROM silerdawncoachesdb.trip where %s = trip.DestinationID", (finaceTrip,))
-        finaceDates = cursor.fetchall()
-
-
-        session['finaceDates'] = finaceDates
-        session['finaceTrip'] = finaceTrip
-
-        cursor.execute("SELECT Date FROM silerdawncoachesdb.trip where %s = trip.DestinationID", (finaceTrip,))
-        finaceDateOne = cursor.fetchone()
-        displayDate = finaceDateOne['Date']
-        print(displayDate)
-
+        # Fetch destination details
         cursor.execute('''
-            SELECT *
-            FROM trip
-            JOIN destination ON destination.DestinationID = trip.DestinationID
-            WHERE trip.TripID = %s;
+            SELECT * FROM silerdawncoachesdb.destination WHERE DestinationID = %s;
         ''', (finaceTrip,))
+        destinationInfo = cursor.fetchone()
 
-        tripDest = cursor.fetchall()
+        if destinationInfo:
+            name = destinationInfo['Destination']
+            costs = destinationInfo['Cost']
+            days = destinationInfo['Days']
+            hotel = destinationInfo['Hotel']
 
-        cursor.execute('''
-            SELECT booking.`Number of people`
-            FROM booking
-            JOIN trip ON booking.TripID = trip.TripID
-            WHERE trip.TripID = %s AND trip.Date = %s;
-        ''', (finaceTrip, displayDate))
-        bookings = cursor.fetchall()
-        seats = sum(i['Number of people'] for i in bookings)
-        
-        seats = 0
-        for i in bookings:
-            seats += i['Number of people']
-        
-        for i in tripDest:
-            name = i['Destination']
-            costs = i['Cost']
-            date = i['Date']
-            hotel = i['Hotel']
-            days = i['Days']
-            
-        totalProfit = costs * seats
-        finData = {'Trip Name' : name,
-                    'Date' : date,
-                   'Cost Per Seat' : costs, 
-                   'Seats Booked' : seats,
-                   'Profit' : totalProfit, 
-                   'Days' : days, 
-                   'Hotel' : hotel}
-        print(finData)
-        
-        session['finData'] = finData
+            session['finaceTrip'] = finaceTrip
+
+            # Fetch trip details for the selected destination
+            cursor.execute('''
+                SELECT TripID, Date, CoachID FROM trip WHERE DestinationID = %s;
+            ''', (finaceTrip,))
+            tripDest = cursor.fetchall()
+
+            finData = []
+            total_seats_booked = 0
+            total_revenue = 0
+
+            for trip in tripDest:
+                tripID = trip['TripID']
+                tripDate = trip['Date']
+                coachID = trip['CoachID']
+
+                # Fetch booking details for each trip
+                cursor.execute('''
+                    SELECT booking.BookingID, booking.`Booking Date`, customer.`First Name`, customer.Surname, booking.`Number of people`, booking.`Special Request`
+                    FROM booking
+                    JOIN customer ON booking.CustomerID = customer.CustomerID
+                    WHERE booking.TripID = %s;
+                ''', (tripID,))
+                bookings = cursor.fetchall()
+
+                seats_booked = sum([booking['Number of people'] for booking in bookings])
+                revenue = seats_booked * costs
+                total_seats_booked += seats_booked
+                total_revenue += revenue
+
+                # Fetch total seats for the coach
+                cursor.execute('''
+                    SELECT Seats FROM coach WHERE CoachID = %s;
+                ''', (coachID,))
+                total_seats = cursor.fetchone()['Seats']
+                percentage_seats_booked = (seats_booked / total_seats) * 100 if total_seats else 0
+
+                finData.append({
+                    'Trip Date': tripDate,
+                    'Bookings': bookings,
+                    'Trip Name': name,
+                    'Cost Per Seat': costs,
+                    'Days': days,
+                    'Hotel': hotel,
+                    'Seats Booked': seats_booked,
+                    'Revenue': revenue,
+                    'Total Seats': total_seats,
+                    'Percentage Seats Booked': percentage_seats_booked
+                })
+
+            session['finData'] = finData
+            session['total_seats_booked'] = total_seats_booked
+            session['total_revenue'] = total_revenue
 
         return redirect("/access")
 
-@app.route('/dateFinance', methods=['GET', 'POST'])
-def dateFinance():
-    print("DOES THIS WORK")
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if request.method == "POST":
-        selectedDate = request.form.get("finaceDate")
-        print("selected DATE:", selectedDate)
-
-        session['finaceDate'] = selectedDate 
-
-        finaceTrip = session.get('finaceTrip')
-        
-        # Get the number of people from a specific trip ID
-        cursor.execute('''
-            SELECT booking.`Number of people`
-            FROM booking
-            JOIN trip ON booking.TripID = trip.TripID
-            WHERE trip.TripID = %s AND trip.Date = %s;
-        ''', (finaceTrip, selectedDate))
-        bookings = cursor.fetchall()
-        seats = sum(i['Number of people'] for i in bookings)
-       
-        print("number of POEPLE:", bookings)
-  
-        return redirect("/access")
 
     
 @app.route("/getDateBooking", methods=['GET', 'POST'])
@@ -460,7 +435,6 @@ def getDateBooking():
 
         return redirect(url_for('booking'))
 
-        return redirect(url_for('booking'))
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
