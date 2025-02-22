@@ -475,7 +475,7 @@ def booking():
     if request.method == "POST":
         trip = request.form.get("trip")
         if trip:
-            print("THIS IS PRINTING, THIS IS THE PROBLEM")
+            print("Trip ID:", trip)
             nameID = request.form.get("name")
             cursor.execute("""SELECT `Address Line 1`, Postcode FROM customer WHERE CustomerID = %s""", (nameID,))
             address = cursor.fetchall()
@@ -485,18 +485,28 @@ def booking():
             coachResult = cursor.fetchone()
             if coachResult:
                 coachID = coachResult['CoachID']
+                print("Coach ID:", coachID)
                     
             selectedSeats = request.form.get("seats")
             notes = request.form.get("notes")
             nameID = request.form.get("name")
             
-            query = """INSERT INTO booking
-                        (`Booking Date`, `CustomerID`, `TripID`, `Number of People`, `Special Request`)
-                        VALUES (%s, %s, %s, %s, %s)"""
-            cursor.execute(query, (dateForm, nameID, trip, selectedSeats, notes))
-            print("BOOKING")
-            mysql.connection.commit()
-            msg = "Booking Added!"
+            # Verify if the trip exists
+            cursor.execute("SELECT TripID FROM trip WHERE DestinationID = %s AND Date = %s", (trip, dateForm))
+            tripResult = cursor.fetchone()
+            if tripResult:
+                tripID = tripResult['TripID']
+                print("Trip ID for booking:", tripID)
+                
+                query = """INSERT INTO booking
+                            (`Booking Date`, `CustomerID`, `TripID`, `Number of People`, `Special Request`)
+                            VALUES (%s, %s, %s, %s, %s)"""
+                cursor.execute(query, (dateForm, nameID, tripID, selectedSeats, notes))
+                print("BOOKING")
+                mysql.connection.commit()
+                msg = "Booking Added!"
+            else:
+                msg = "Trip does not exist for the selected destination and date."
 
     return render_template('booking_tab.html',
                            destinations=destinations,
