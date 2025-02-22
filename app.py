@@ -421,32 +421,44 @@ def getDateBooking():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         trip = request.args.get('trip')
         
-        cursor.execute("SELECT Date FROM trip WHERE DestinationID = %s", (trip,))
+        # Get all available dates for the selected trip
+        cursor.execute("SELECT Date, TripID FROM trip WHERE DestinationID = %s", (trip,))
         bookingSelectedInfo = cursor.fetchall()
 
+        # Get the destination name
         cursor.execute("SELECT Destination FROM destination WHERE DestinationID = %s", (trip,))
         destinationBooking = cursor.fetchone()
 
-        cursor.execute(
-            "SELECT coach.Seats FROM coach "
-            "INNER JOIN trip ON coach.CoachID = trip.CoachID "
-            "WHERE trip.DestinationID = %s", (trip,)
-        )
+        # Get total seats for the coach assigned to the trip
+        cursor.execute("""
+            SELECT coach.Seats, trip.TripID FROM coach 
+            INNER JOIN trip ON coach.CoachID = trip.CoachID 
+            WHERE trip.DestinationID = %s
+        """, (trip,))
         result = cursor.fetchone()
-        total_seats = result['Seats'] if result else 0
+        
+        if not result:
+            session['available_seats'] = 0
+            return redirect(url_for('booking'))
 
+        total_seats = result['Seats']
+        trip_id = result['TripID']
+
+        # Get booked seats only for the specific trip
         cursor.execute(
             "SELECT COALESCE(SUM(`Number of people`), 0) AS booked_seats FROM booking WHERE TripID = %s",
-            (trip,)
+            (trip_id,)
         )
         booked_result = cursor.fetchone()
-        booked_seats = booked_result['booked_seats'] if booked_result else 0
+        booked_seats = booked_result['booked_seats']
 
         available_seats = total_seats - booked_seats
 
         session['destinationBooking'] = destinationBooking
         session['bookingDates'] = bookingSelectedInfo
-        session['available_seats'] = available_seats
+        session['available_seats'] = max(0, available_seats)
+
+        return redirect(url_for('booking'))
 
         return redirect(url_for('booking'))
 
@@ -474,39 +486,48 @@ def booking():
 
     if request.method == "POST":
         trip = request.form.get("trip")
-        if trip:
-            print("Trip ID:", trip)
-            nameID = request.form.get("name")
-            cursor.execute("""SELECT `Address Line 1`, Postcode FROM customer WHERE CustomerID = %s""", (nameID,))
-            address = cursor.fetchall()
+        dateForm = request.form.get("date")
+        nameID = request.form.get("name")
+        selectedSeats = int(request.form.get("seats"))
+        notes = request.form.get("notes")
 
-            dateForm = request.form.get("date")
-            cursor.execute("SELECT CoachID FROM trip WHERE DestinationID = %s", (trip,))
+        # Ensure a trip exists for this destination and date
+        cursor.execute("SELECT TripID, CoachID FROM trip WHERE DestinationID = %s AND Date = %s", (trip, dateForm))
+        tripResult = cursor.fetchone()
+
+        if tripResult:
+            tripID = tripResult['TripID']
+            coachID = tripResult['CoachID']
+
+            # Get total seats of the coach
+            cursor.execute("SELECT Seats FROM coach WHERE CoachID = %s", (coachID,))
             coachResult = cursor.fetchone()
-            if coachResult:
-                coachID = coachResult['CoachID']
-                print("Coach ID:", coachID)
-                    
-            selectedSeats = request.form.get("seats")
-            notes = request.form.get("notes")
-            nameID = request.form.get("name")
-            
-            # Verify if the trip exists
-            cursor.execute("SELECT TripID FROM trip WHERE DestinationID = %s AND Date = %s", (trip, dateForm))
-            tripResult = cursor.fetchone()
-            if tripResult:
-                tripID = tripResult['TripID']
-                print("Trip ID for booking:", tripID)
-                
+            if not coachResult:
+                msg = "Error: Coach not found."
+                return render_template('booking_tab.html', **locals())
+
+            total_seats = coachResult['Seats']
+
+            # Get currently booked seats
+            cursor.execute(
+                "SELECT COALESCE(SUM(`Number of people`), 0) AS booked_seats FROM booking WHERE TripID = %s",
+                (tripID,)
+            )
+            booked_seats = cursor.fetchone()['booked_seats']
+
+            remaining_seats = total_seats - booked_seats
+
+            if selectedSeats > remaining_seats:
+                msg = "Not enough seats available!"
+            else:
                 query = """INSERT INTO booking
                             (`Booking Date`, `CustomerID`, `TripID`, `Number of People`, `Special Request`)
                             VALUES (%s, %s, %s, %s, %s)"""
                 cursor.execute(query, (dateForm, nameID, tripID, selectedSeats, notes))
-                print("BOOKING")
                 mysql.connection.commit()
                 msg = "Booking Added!"
-            else:
-                msg = "Trip does not exist for the selected destination and date."
+        else:
+            msg = "Trip does not exist for the selected destination and date."
 
     return render_template('booking_tab.html',
                            destinations=destinations,
@@ -517,6 +538,7 @@ def booking():
                            trip=trip,
                            bookingDates=bookingDates,
                            destinationBooking=destinationBooking)
+
 
 
 @app.route('/get_trip_by_date/<path:trip_date>', methods=['GET', 'POST'])
