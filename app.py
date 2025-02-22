@@ -414,6 +414,7 @@ def dateFinance():
   
         return redirect("/access")
 
+    
 @app.route("/getDateBooking", methods=['GET', 'POST'])
 def getDateBooking():
     if request.method == "GET":
@@ -426,8 +427,26 @@ def getDateBooking():
         cursor.execute("SELECT Destination FROM destination WHERE DestinationID = %s", (trip,))
         destinationBooking = cursor.fetchone()
 
+        cursor.execute(
+            "SELECT coach.Seats FROM coach "
+            "INNER JOIN trip ON coach.CoachID = trip.CoachID "
+            "WHERE trip.DestinationID = %s", (trip,)
+        )
+        result = cursor.fetchone()
+        total_seats = result['Seats'] if result else 0
+
+        cursor.execute(
+            "SELECT COALESCE(SUM(`Number of people`), 0) AS booked_seats FROM booking WHERE TripID = %s",
+            (trip,)
+        )
+        booked_result = cursor.fetchone()
+        booked_seats = booked_result['booked_seats'] if booked_result else 0
+
+        available_seats = total_seats - booked_seats
+
         session['destinationBooking'] = destinationBooking
         session['bookingDates'] = bookingSelectedInfo
+        session['available_seats'] = available_seats
 
         return redirect(url_for('booking'))
 
@@ -451,46 +470,33 @@ def booking():
 
     destinationBooking = session.get('destinationBooking')
     bookingDates = session.get('bookingDates')
+    available_seats = session.get('available_seats', '')
 
     if request.method == "POST":
         trip = request.form.get("trip")
-        if bookingDates:
-            return render_template('booking_tab.html',
-                                   destinations=destinations,
-                                   names=names,
-                                   date=date,
-                                   msg=msg,
-                                   trip=trip,
-                                   bookingDates=bookingDates,
-                                   destinationBooking=destinationBooking)
-        nameID = request.form.get("name")
-        cursor.execute("""SELECT `Address Line 1`, Postcode FROM customer WHERE CustomerID = %s""", (nameID,))
-        address = cursor.fetchall()
+        if trip:
+            print("THIS IS PRINTING, THIS IS THE PROBLEM")
+            nameID = request.form.get("name")
+            cursor.execute("""SELECT `Address Line 1`, Postcode FROM customer WHERE CustomerID = %s""", (nameID,))
+            address = cursor.fetchall()
 
-    # Get available seats if needed (optional display purpose)
-    available_seats = ""
-    if request.method == "POST":
-        dateForm = request.form.get("date")
-        cursor.execute("SELECT CoachID FROM trip WHERE DestinationID = %s", (trip,))
-        coachResult = cursor.fetchone()
-        if coachResult:
-            coachID = coachResult['CoachID']
-                
-        selectedSeats = request.form.get("seats")
-        notes = request.form.get("notes")
-        nameID = request.form.get("name")
-        
-        if dateForm and trip and nameID and selectedSeats:
-            try:
-                query = """INSERT INTO booking
-                           (`Booking Date`, `CustomerID`, `TripID`, `Number of People`, `Special Request`)
-                           VALUES (%s, %s, %s, %s, %s)"""
-                cursor.execute(query, (dateForm, nameID, trip, selectedSeats, notes))
-                mysql.connection.commit()
-                msg = "Booking Added!"
-            except Exception as e:
-                print(e)
-                msg = "Booking Error"
+            dateForm = request.form.get("date")
+            cursor.execute("SELECT CoachID FROM trip WHERE DestinationID = %s", (trip,))
+            coachResult = cursor.fetchone()
+            if coachResult:
+                coachID = coachResult['CoachID']
+                    
+            selectedSeats = request.form.get("seats")
+            notes = request.form.get("notes")
+            nameID = request.form.get("name")
+            
+            query = """INSERT INTO booking
+                        (`Booking Date`, `CustomerID`, `TripID`, `Number of People`, `Special Request`)
+                        VALUES (%s, %s, %s, %s, %s)"""
+            cursor.execute(query, (dateForm, nameID, trip, selectedSeats, notes))
+            print("BOOKING")
+            mysql.connection.commit()
+            msg = "Booking Added!"
 
     return render_template('booking_tab.html',
                            destinations=destinations,
