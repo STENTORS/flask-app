@@ -174,7 +174,6 @@ def access():
         if adminAction == "finance":
             cursor.execute("SELECT * FROM silerdawncoachesdb.destination")
             financeArray = cursor.fetchall()
-            print(financeArray)
 
             finaceTrip = session.get('finaceTrip')
             finaceDates = session.get('finaceDates')
@@ -329,26 +328,53 @@ def finance():
             SELECT * FROM silerdawncoachesdb.destination
         ''')
         financeArray = cursor.fetchall()
-        print(financeArray)
+
         finaceTrip = request.form.get("finaceTrip")
 
         cursor.execute("SELECT Date FROM silerdawncoachesdb.trip where %s = trip.DestinationID", (finaceTrip,))
         finaceDates = cursor.fetchall()
-        print("TRIP", finaceTrip)
-        print("DATES", finaceDates)
+
 
         session['finaceDates'] = finaceDates
         session['finaceTrip'] = finaceTrip
+
+        cursor.execute("SELECT Date FROM silerdawncoachesdb.trip where %s = trip.DestinationID", (finaceTrip,))
+        finaceDateOne = cursor.fetchone()
+        displayDate = finaceDateOne['Date']
+        print(displayDate)
+
+        cursor.execute('''
+            SELECT booking.`Number of people`
+            FROM booking
+            JOIN trip ON booking.TripID = trip.TripID
+            WHERE trip.TripID = %s AND trip.Date = %s;
+        ''', (finaceTrip, displayDate))
+        bookings = cursor.fetchall()
+        seats = sum(i['Number of people'] for i in bookings)
+        
+        
+        finData = {
+            'seats': seats,
+            'date': displayDate,
+            'trip': finaceTrip
+        }
+        session['finData'] = finData
+        print("number of POEPLE:", seats)
+
+
         return redirect("/access")
 
 @app.route('/dateFinance', methods=['GET', 'POST'])
 def dateFinance():
+    print("DOES THIS WORK")
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if request.method == "POST":
-        finaceDate = request.form.get("finaceDate")
-        session['finaceDate'] = finaceDate 
+        selectedDate = request.form.get("finaceDate")
+        print("selected DATE:", selectedDate)
 
-        financeTrip = session.get('finaceTrip')
+        session['finaceDate'] = selectedDate 
+
+        finaceTrip = session.get('finaceTrip')
         
         # Get the number of people from a specific trip ID
         cursor.execute('''
@@ -356,11 +382,11 @@ def dateFinance():
             FROM booking
             JOIN trip ON booking.TripID = trip.TripID
             WHERE trip.TripID = %s AND trip.Date = %s;
-        ''', (financeTrip, finaceDate))
+        ''', (finaceTrip, selectedDate))
         bookings = cursor.fetchall()
         seats = sum(i['Number of people'] for i in bookings)
        
-        print(bookings)
+        print("number of POEPLE:", bookings)
   
         return redirect("/access")
 

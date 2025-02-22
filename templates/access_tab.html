@@ -91,7 +91,7 @@
 							<form method="post" action="/dateFinance">
 								<div class="formbox">
 									<label for="finaceDate">Trip Date:</label><br>
-									<select id="finaceDate" name="finaceDate" onchange="this.form.submit()">
+									<select id="finaceDate" name="finaceDate">
 										{% if finaceDates %}
 											{% for date in finaceDates %}
 												<option value="{{ date['Date'] }}">{{ date['Date'] }}</option>
