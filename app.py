@@ -182,6 +182,7 @@ def access():
             finaceTrip = cursor.fetchone()
 
             if finaceDates:
+                finData = session.get('finData')
                 
                 print("DATES", finaceDates)
                 print("TRIP", finaceTrip)
@@ -191,7 +192,8 @@ def access():
                                     adminAction=adminAction, 
                                     financeArray = financeArray,
                                     finaceDates = finaceDates,
-                                    finaceTrip = finaceTrip)
+                                    finaceTrip = finaceTrip,
+                                    finData = finData,)
 
             return render_template("access_tab.html", 
                                    title="Admin | Edit", 
@@ -344,6 +346,15 @@ def finance():
         print(displayDate)
 
         cursor.execute('''
+            SELECT *
+            FROM trip
+            JOIN destination ON destination.DestinationID = trip.DestinationID
+            WHERE trip.TripID = %s;
+        ''', (finaceTrip,))
+
+        tripDest = cursor.fetchall()
+
+        cursor.execute('''
             SELECT booking.`Number of people`
             FROM booking
             JOIN trip ON booking.TripID = trip.TripID
@@ -352,15 +363,28 @@ def finance():
         bookings = cursor.fetchall()
         seats = sum(i['Number of people'] for i in bookings)
         
+        seats = 0
+        for i in bookings:
+            seats += i['Number of people']
         
-        finData = {
-            'seats': seats,
-            'date': displayDate,
-            'trip': finaceTrip
-        }
+        for i in tripDest:
+            name = i['Destination']
+            costs = i['Cost']
+            date = i['Date']
+            hotel = i['Hotel']
+            days = i['Days']
+            
+        totalProfit = costs * seats
+        finData = {'Trip Name' : name,
+                    'Date' : date,
+                   'Cost Per Seat' : costs, 
+                   'Seats Booked' : seats,
+                   'Profit' : totalProfit, 
+                   'Days' : days, 
+                   'Hotel' : hotel}
+        print(finData)
+        
         session['finData'] = finData
-        print("number of POEPLE:", seats)
-
 
         return redirect("/access")
 
