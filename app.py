@@ -414,26 +414,22 @@ def dateFinance():
   
         return redirect("/access")
 
-@app.route('/get_trips/<destination_id>', methods=['GET'])
-def get_trips(destination_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT TripID, Date FROM trip WHERE DestinationID = %s", (destination_id,))
-    trips = cursor.fetchall()
-    return {'trips': trips}
+@app.route("/getDateBooking", methods=['GET', 'POST'])
+def getDateBooking():
+    if request.method == "GET":
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        trip = request.args.get('trip')
+        
+        cursor.execute("SELECT Date FROM trip WHERE DestinationID = %s", (trip,))
+        bookingSelectedInfo = cursor.fetchall()
 
-@app.route('/get_dates/<trip_id>', methods=['GET'])
-def get_dates(trip_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT Date FROM trip WHERE TripID = %s", (trip_id,))
-    dates = cursor.fetchall()
-    return {'dates': [date['Date'] for date in dates]}
+        cursor.execute("SELECT Destination FROM destination WHERE DestinationID = %s", (trip,))
+        destinationBooking = cursor.fetchone()
 
-@app.route('/financeDate', methods=['GET', 'POST'])
-def financeDate():
-    if request.method == "POST":
-        date = request.form.get("date_fin")
-        session['date'] = date  # Store date in session
+        session['destinationBooking'] = destinationBooking
+        session['bookingDates'] = bookingSelectedInfo
 
+        return redirect(url_for('booking'))
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
@@ -442,19 +438,31 @@ def booking():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     # Fetch destinations and customer names
-    cursor.execute("""SELECT destination.DestinationID, destination.Destination
-                      FROM destination
-                      INNER JOIN trip ON trip.DestinationID = destination.DestinationID""")
+    cursor.execute("""SELECT DISTINCT destination.DestinationID, destination.Destination
+                    FROM destination
+                    INNER JOIN trip ON trip.DestinationID = destination.DestinationID;
+                   """)
     destinations = cursor.fetchall()
+
     cursor.execute("SELECT CustomerID, `First Name`, Surname FROM customer")
     names = cursor.fetchall()
     cursor.execute("SELECT Date FROM trip")
     date = cursor.fetchall()
 
+    destinationBooking = session.get('destinationBooking')
+    bookingDates = session.get('bookingDates')
+
     if request.method == "POST":
         trip = request.form.get("trip")
-        cursor.execute("SELECT Date FROM trip WHERE DestinationID = %s", (trip,))
-        date = cursor.fetchall()
+        if bookingDates:
+            return render_template('booking_tab.html',
+                                   destinations=destinations,
+                                   names=names,
+                                   date=date,
+                                   msg=msg,
+                                   trip=trip,
+                                   bookingDates=bookingDates,
+                                   destinationBooking=destinationBooking)
         nameID = request.form.get("name")
         cursor.execute("""SELECT `Address Line 1`, Postcode FROM customer WHERE CustomerID = %s""", (nameID,))
         address = cursor.fetchall()
@@ -490,7 +498,9 @@ def booking():
                            date=date,
                            seats=available_seats,
                            msg=msg,
-                           trip=trip)
+                           trip=trip,
+                           bookingDates=bookingDates,
+                           destinationBooking=destinationBooking)
 
 
 @app.route('/get_trip_by_date/<path:trip_date>', methods=['GET', 'POST'])

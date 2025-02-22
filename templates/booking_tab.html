@@ -8,84 +8,6 @@
 		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 	</head>
 	<body>
-		<script>
-			document.addEventListener("DOMContentLoaded", function () {
-				let isUpdating = false;
-				let userSelectedDate = false;
-
-				// Updates the date dropdown based on the selected trip.
-				function updateDateDropdown(tripId) {
-					fetch(`/get_dates/${tripId}`)
-						.then(response => response.json())
-						.then(data => {
-							let dateDropdown = document.getElementById("date");
-							let previousSelection = dateDropdown.value;
-
-							isUpdating = true;
-							dateDropdown.innerHTML = "";
-
-							data.dates.forEach(date => {
-								let option = document.createElement("option");
-								option.value = date;
-								option.textContent = date;
-								dateDropdown.appendChild(option);
-							});
-
-							// Restore previous selection if it exists, otherwise default to the first
-							if (userSelectedDate && data.dates.includes(previousSelection)) {
-								dateDropdown.value = previousSelection;
-							} else if (dateDropdown.options.length > 0) {
-								dateDropdown.selectedIndex = 0;
-							}
-
-							isUpdating = false;
-						})
-						.catch(error => console.error("Error fetching dates:", error));
-				}
-
-				// Updates the trip dropdown based on the selected date.
-				function updateTripDropdown(selectedDate) {
-					fetch(`/get_trip_by_date/${selectedDate}`)
-						.then(response => response.json())
-						.then(data => {
-							if (data.tripId) {
-								let tripDropdown = document.getElementById("trip");
-								isUpdating = true;
-								tripDropdown.value = data.tripId;
-								isUpdating = false;
-							}
-						})
-						.catch(error => console.error("Error fetching trip:", error));
-				}
-
-				function updateSeats(tripId) {
-					fetch(`/get_seats/${tripId}`)
-						.then(response => response.json())
-						.then(data => {
-							document.getElementById("seatId").textContent = `Available Seats: ${data.seats}`;
-							document.getElementById("seats").max = data.seats; // Update max limit dynamically
-						})
-						.catch(error => console.error("Error fetching seats:", error));
-				}
-
-				document.getElementById("trip").addEventListener("change", function () {
-					if (isUpdating) return;
-					let tripId = this.value;
-					updateDateDropdown(tripId);
-					updateSeats(tripId);
-				});
-
-				document.getElementById("date").addEventListener("change", function () {
-					if (isUpdating) return;
-					let selectedDate = this.value;
-					updateTripDropdown(selectedDate);
-				});
-			});
-
-			
-
-		</script>
-		
 		<div class="grandparent">
 			<div class="parent title">
 				<h1>SILVER DAWN COACHES DATA ADMIN</h1>
@@ -129,9 +51,19 @@
 								</div>
 								<div class="formbox">
 									<label for="trip">Trip Select:</label>
-									<select id="trip" name="trip">
-										{% for trip in destinations %}
-											<option value="{{ trip['DestinationID'] }}">{{ trip['Destination'] }}</option>
+									<select id="trip" name="trip" onchange="window.location.href='/getDateBooking?trip=' + this.value">
+										
+										{% for destination in destinations %}
+											{% if destinationBooking %}
+												{% if destination['Destination'] == destinationBooking['Destination'] %}
+													<option value="{{ destination['DestinationID'] }}" selected="selected">{{ destination['Destination'] }}</option>
+												{% else %}
+													<option value="{{ destination['DestinationID'] }}">{{ destination['Destination'] }}</option>
+												{% endif %}	
+											{% else %}
+												<option value="{{ destination['DestinationID'] }}">{{ destination['Destination'] }}</option>
+											{% endif %}
+										
 										{% endfor %}
 									</select>
 
@@ -140,8 +72,8 @@
 								<div class="formbox">
 									<label for="date">Trip Date:</label><br>
 									<select id="date" name="date">
-										{% if date %}
-											{% for date in date %}
+										{% if bookingDates %}
+											{% for date in bookingDates %}
 												<option value="{{ date['Date'] }}">{{ date['Date'] }}</option>
 											{% endfor %}
 										{% endif %}
