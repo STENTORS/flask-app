@@ -78,14 +78,37 @@
 					</div>
 
 					<div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
-						<h2>Search Postcodes</h2>
 						<!-- Content for Search Postcodes -->
 						<form method="post" action="/postCodeLookup">
 							<div class="formbox">
 								<!-- Postcode input Field -->
-								<input type="text" id="dataSelect" name="dataSelect" placeholder="Postcode">
+								<input type="text" id="postcode" name="postcode" placeholder="Postcode">
 							</div>
 						</form>
+					
+						<!-- Display customersPostcode data -->
+						{% if customersPostcode %}
+							<div class="tableContainer">
+								<table>
+									<thead>
+										<tr>
+											{% for key in customersPostcode[0].keys() %}
+												<th>{{ key }}</th>
+											{% endfor %}
+										</tr>
+									</thead>
+									<tbody>
+										{% for customer in customersPostcode %}
+											<tr>
+												{% for value in customer.values() %}
+													<td>{{ value }}</td>
+												{% endfor %}
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+						{% endif %}
 					</div>
 
 					<div id="upcomingTrips" class="section" style="display: {% if selected_section == 'upcomingTrips' %}block{% else %}none{% endif %};">

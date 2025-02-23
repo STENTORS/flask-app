@@ -569,6 +569,23 @@ def get_seats(trip_id):
     return {'seats': max(0, available_seats)}  # Ensure no negative values
 
 
+@app.route('/postCodeLookup', methods=['GET', 'POST'])
+def postCodeLookup():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == "POST":
+        postcode = request.form.get('postcode')
+        print(postcode)
+    
+        # Use a LIKE query with a wildcard to match postcodes that start with the given input
+        cursor.execute("SELECT * FROM customer WHERE Postcode LIKE %s", (postcode + '%',))
+        customersPostcode = cursor.fetchall()
+        print(customersPostcode)
+        session['customersPostcode'] = customersPostcode
+        session['selected_section'] = 'searchPostcodes'
+        
+        return redirect(url_for('lookup'))
+    return redirect(url_for('lookup'))
+
 @app.route("/lookup", methods=['GET', 'POST']) 
 def lookup():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -629,7 +646,7 @@ def lookup():
     upcomingTrips = cursor.fetchall()
     print(upcomingTrips)
 
-     # Fetch destination names and other relevant data for each trip
+    # Fetch destination names and other relevant data for each trip
     for trip in upcomingTrips:
         cursor.execute("""
             SELECT d.Destination, d.Hotel, d.Cost, d.Days, c.Registration
@@ -648,7 +665,10 @@ def lookup():
 
     print("Upcoming Trips with Destination Names and Additional Details")
     print(upcomingTrips)
-    selected_section = request.args.get('selectedSection') or request.form.get('selectedSection')
+
+    # Retrieve the selected section and customersPostcode from the session
+    selected_section = session.get('selected_section', 'searchPostcodes')
+    customersPostcode = session.get('customersPostcode', [])
 
     return render_template("lookup_tab.html",
                            tableList=tableList,
@@ -656,7 +676,8 @@ def lookup():
                            displayData=displayData,
                            amountOfData=len(displayData),
                            selected_section=selected_section,
-                           upcomingTrips=upcomingTrips)
+                           upcomingTrips=upcomingTrips,
+                           customersPostcode=customersPostcode)
 
 if __name__ == "__main__":
     app.run(debug=True)
