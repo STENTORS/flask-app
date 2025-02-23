@@ -91,8 +91,32 @@
 					<div id="upcomingTrips" class="section" style="display: {% if selected_section == 'upcomingTrips' %}block{% else %}none{% endif %};">
 						<h2>Upcoming Trips</h2>
 						<!-- Content for Upcoming Trips -->
-						 {{upcomingTrips}}
-						 
+						<div class="tableContainer">
+							<table>
+								<thead>
+									<tr>
+										<th>Date</th>
+										<th>Destination</th>
+										<th>Hotel</th>
+										<th>Cost</th>
+										<th>Days</th>
+										<th>Coach Registration</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for trip in upcomingTrips %}
+										<tr>
+											<td>{{ trip['Date'] }}</td>
+											<td>{{ trip['Destination'] }}</td>
+											<td>{{ trip['Hotel'] }}</td>
+											<td>{{ trip['Cost'] }}</td>
+											<td>{{ trip['Days'] }}</td>
+											<td>{{ trip['CoachReg'] }}</td>
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
 					</div>
 
 					<div id="searchAllData" class="section" style="display: {% if selected_section == 'searchAllData' %}block{% else %}none{% endif %};">

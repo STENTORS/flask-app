@@ -629,8 +629,25 @@ def lookup():
     upcomingTrips = cursor.fetchall()
     print(upcomingTrips)
 
-    
+     # Fetch destination names and other relevant data for each trip
+    for trip in upcomingTrips:
+        cursor.execute("""
+            SELECT d.Destination, d.Hotel, d.Cost, d.Days, c.Registration
+            FROM destination d
+            JOIN coach c ON c.CoachID = %s
+            WHERE d.DestinationID = %s
+        """, (trip['CoachID'], trip['DestinationID']))
+        destination = cursor.fetchone()
 
+        if destination:
+            trip['Destination'] = destination['Destination']
+            trip['Hotel'] = destination['Hotel']
+            trip['Cost'] = destination['Cost']
+            trip['Days'] = destination['Days']
+            trip['CoachReg'] = destination['Registration']
+
+    print("Upcoming Trips with Destination Names and Additional Details")
+    print(upcomingTrips)
     selected_section = request.args.get('selectedSection') or request.form.get('selectedSection')
 
     return render_template("lookup_tab.html",
