@@ -111,7 +111,7 @@
                                                     <td>{{ trip['Trip Date'] }}</td>
                                                     <td>{{ trip['Seats Booked'] }}</td>
                                                     <td>{{ trip['Total Seats'] }}</td>
-                                                    <td>{{ trip['Percentage Seats Booked'] }}%</td>
+                                                    <td>{{ trip['Percentage Seats Booked']|round(2) }}%</td>
                                                     <td>{{ trip['Revenue'] }}</td>
                                                 </tr>
                                             {% endfor %}
@@ -122,21 +122,21 @@
                                         </tbody>
                                     </table>
 
-
                                     <h1>Customer Information</h1>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Booking ID</th>
-                                                <th>Booking Date</th>
-                                                <th>First Name</th>
-                                                <th>Surname</th>
-                                                <th>Number of People</th>
-                                                <th>Special Request</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for trip in finData %}
+                                    {% for trip in finData %}
+                                        <h2>Trip Date: {{ trip['Trip Date'] }}</h2>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Booking ID</th>
+                                                    <th>Booking Date</th>
+                                                    <th>First Name</th>
+                                                    <th>Surname</th>
+                                                    <th>Number of People</th>
+                                                    <th>Special Request</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
                                                 {% for booking in trip['Bookings'] %}
                                                     <tr>
                                                         <td>{{ booking['BookingID'] }}</td>
@@ -147,11 +147,9 @@
                                                         <td>{{ booking['Special Request'] }}</td>
                                                     </tr>
                                                 {% endfor %}
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                
-                                    
+                                            </tbody>
+                                        </table>
+                                    {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
