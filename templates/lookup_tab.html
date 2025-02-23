@@ -7,6 +7,22 @@
     <link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
+	<script>
+		function showSection(sectionId) {
+			// Hide all sections
+			document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
+			
+			// Show the selected section
+			document.getElementById(sectionId).style.display = 'block';
+	
+			// Set the hidden input value to store selected section
+			document.getElementById('selectedSection').value = sectionId;
+	
+			// Submit the form to update session value
+			document.getElementById('sectionForm').submit();
+		}
+	</script>
+	
 </head>
 
 <body>
@@ -56,173 +72,168 @@
 
                     <div class="formbox formbox-lookup">
                         <form method="post" action="/lookup" id="sectionForm">
-                            <input type="hidden" id="selectedSection" name="selectedSection" value="{{ selected_section }}">
-                            <button type="button" onclick="showSection('tripPassengers')">Trip Passengers</button>
-                            <button type="button" onclick="showSection('searchPostcodes')">Search Postcodes</button>
-                            <button type="button" onclick="showSection('upcomingTrips')">Upcoming Trips</button>
-                            <button type="button" onclick="showSection('searchAllData')">Search All Data</button>
+							<input type="hidden" id="selectedSection" name="selectedSection" value="{{ selected_section }}">
+							<button type="button" onclick="showSection('tripPassengers')">Trip Passengers</button>
+							<button type="button" onclick="showSection('searchPostcodes')">Search Postcodes</button>
+							<button type="button" onclick="showSection('upcomingTrips')">Upcoming Trips</button>
+							<button type="button" onclick="showSection('searchAllData')">Search All Data</button>
+						</form>
+						
+                    </div>
+
+                    <!-- Sections controlled by buttons -->
+                    <div id="tripPassengers" class="section" style="display: {% if selected_section == 'tripPassengers' %}block{% else %}none{% endif %};">
+                        <h2>Trip Passengers</h2>
+                        <!-- Lookup for Trip Passengers by date and destination -->
+                        <form method="post" action="/tripLookup">
+                            <div class="formbox">
+                                
+                            </div>
                         </form>
                     </div>
 
-
-
-					<!-- Sections controlled by buttons -->
-					<div id="tripPassengers" class="section" style="display: {% if selected_section == 'tripPassengers' %}block{% else %}none{% endif %};">
-						<h2>Trip Passengers</h2>
-						<!-- Lookup for Trip Passengers by date and destination -->
-						<form method="post" action="/tripLookup">
-							<div class="formbox">
-								
-							</div>
-						</form>
-					</div>
-
 					<div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
-						<!-- Content for Search Postcodes -->
-						<form method="post" action="/postCodeLookup">
-							<div class="formbox">
-								<!-- Postcode input Field -->
-								<input type="text" id="postcode" name="postcode" placeholder="Postcode">
-							</div>
-						</form>
-					
-						<!-- Display customersPostcode data -->
-						{% if customersPostcode %}
-							<div class="tableContainer">
-								<table>
-									<thead>
-										<tr>
-											{% for key in customersPostcode[0].keys() %}
-												<th>{{ key }}</th>
-											{% endfor %}
-										</tr>
-									</thead>
-									<tbody>
-										{% for customer in customersPostcode %}
-											<tr>
-												{% for value in customer.values() %}
-													<td>{{ value }}</td>
-												{% endfor %}
-											</tr>
-										{% endfor %}
-									</tbody>
-								</table>
-							</div>
-						{% endif %}
-					</div>
+                        <!-- Content for Search Postcodes -->
+                        <form method="post" action="/postCodeLookup">
+                            <div class="formbox">
+                                <!-- Postcode input Field -->
+                                <input type="text" id="postcode" name="postcode" placeholder="Postcode">
+                                <button type="submit">Search</button>
+                            </div>
+                        </form>
+                    
+                        <!-- Display customersPostcode data -->
+                        {% if customersPostcode %}
+                            <div class="tableContainer">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {% for key in customersPostcode[0].keys() %}
+                                                <th>{{ key }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for customer in customersPostcode %}
+                                            <tr>
+                                                {% for value in customer.values() %}
+                                                    <td>{{ value }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
 
-					<div id="upcomingTrips" class="section" style="display: {% if selected_section == 'upcomingTrips' %}block{% else %}none{% endif %};">
-						
-						<!-- Content for Upcoming Trips -->
-						<div class="tableContainer">
-						
-							<table>
-								<thead>
-									<tr>
-										<th style="font-size:20px; color:#385D3D; background-color:#839B85;" colspan="6">Upcoming Trips</th>
-									</tr>
-								</thead>
-								<thead>
-									<tr>
-										
-										<th>Date</th>
-										<th>Destination</th>
-										<th>Hotel</th>
-										<th>Cost</th>
-										<th>Days</th>
-										<th>Coach Registration</th>
-									</tr>
-								</thead>
-								<tbody>
-									{% for trip in upcomingTrips %}
-										<tr>
-											<td>{{ trip['Date'] }}</td>
-											<td>{{ trip['Destination'] }}</td>
-											<td>{{ trip['Hotel'] }}</td>
-											<td>{{ trip['Cost'] }}</td>
-											<td>{{ trip['Days'] }}</td>
-											<td>{{ trip['CoachReg'] }}</td>
-										</tr>
-									{% endfor %}
-								</tbody>
-							</table>
-						</div>
-					</div>
+                    <div id="upcomingTrips" class="section" style="display: {% if selected_section == 'upcomingTrips' %}block{% else %}none{% endif %};">
+                        <!-- Content for Upcoming Trips -->
+                        <div class="tableContainer">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="font-size:20px; color:#385D3D; background-color:#839B85;" colspan="6">Upcoming Trips</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Destination</th>
+                                        <th>Hotel</th>
+                                        <th>Cost</th>
+                                        <th>Days</th>
+                                        <th>Coach Registration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trip in upcomingTrips %}
+                                        <tr>
+                                            <td>{{ trip['Date'] }}</td>
+                                            <td>{{ trip['Destination'] }}</td>
+                                            <td>{{ trip['Hotel'] }}</td>
+                                            <td>{{ trip['Cost'] }}</td>
+                                            <td>{{ trip['Days'] }}</td>
+                                            <td>{{ trip['CoachReg'] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-					<div id="searchAllData" class="section" style="display: {% if selected_section == 'searchAllData' %}block{% else %}none{% endif %};">
-						<!-- Content for Search All Data -->
-						<form method="post" action="/lookup">
-							<div class="formbox">
-								<input type="hidden" name="selectedSection" value="{{ selected_section }}">
-								
-								<select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
-									{% for col in tableList %}
-										<option value="{{ col['Tables_in_silerdawncoachesdb'] }}"
-											{% if col['Tables_in_silerdawncoachesdb'] == request.args.get('tableSelect', 'customer') %}
-												selected
-											{% endif %}>
-											{{ col['Tables_in_silerdawncoachesdb'] }}
-										</option>
-									{% endfor %}
-								</select>
-						
-								<!-- Column Select -->
-								<select id="columnSelect" name="columnSelect" onchange="this.form.submit()">
-									<option value="" selected disabled>Select</option>
-									{% for col in columnList %}
-										<option value="{{ col['Field'] }}"
-											{% if col['Field'] == request.args.get('columnSelect') %}
-												selected
-											{% endif %}>
-											{{ col['Field'] }}
-										</option>
-									{% endfor %}
-								</select>
-						
-								<!-- Search Field -->
-								<input type="text" id="dataSelect" name="dataSelect" placeholder="Search">
-							</div>
-						</form>
-						
-						<div class="child" style="border-radius: 20px; width: 100%;">
-							<div class="tableContainer">
-								<table>
-									<thead>
-										<tr>
-											{% if displayData %}
-												{% for key in displayData[0].keys() %}
-													<th>{{key}}</th>
-												{% endfor %}
-											{% endif %}
-										</tr>
-									</thead>
-	
-									<tbody>
-										{% if displayData %}
-											{% for num in range(0,amountOfData) %}
-												<tr>
-													{% for i in displayData[num].values() %}
-														{% if i %}
-															<td>{{ i }}</td>
-														{% else %}
-															<td>No Data</td>
-														{% endif %}
-													{% endfor %}
-												</tr>
-											{% endfor %}
-										{% endif %}
-										
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
+                    <div id="searchAllData" class="section" style="display: {% if selected_section == 'searchAllData' %}block{% else %}none{% endif %};">
+                        <!-- Content for Search All Data -->
+                        <form method="post" action="/lookup">
+                            <div class="formbox">
+                                <input type="hidden" name="selectedSection" value="{{ selected_section }}">
+                                
+                                <select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
+                                    {% for col in tableList %}
+                                        <option value="{{ col['Tables_in_silerdawncoachesdb'] }}"
+                                            {% if col['Tables_in_silerdawncoachesdb'] == request.args.get('tableSelect', 'customer') %}
+                                                selected
+                                            {% endif %}>
+                                            {{ col['Tables_in_silerdawncoachesdb'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                        
+                                <!-- Column Select -->
+                                <select id="columnSelect" name="columnSelect" onchange="this.form.submit()">
+                                    <option value="" selected disabled>Select</option>
+                                    {% for col in columnList %}
+                                        <option value="{{ col['Field'] }}"
+                                            {% if col['Field'] == request.args.get('columnSelect') %}
+                                                selected
+                                            {% endif %}>
+                                            {{ col['Field'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                        
+                                <!-- Search Field -->
+                                <input type="text" id="dataSelect" name="dataSelect" placeholder="Search">
+                            </div>
+                        </form>
+                        
+                        <div class="child" style="border-radius: 20px; width: 100%;">
+                            <div class="tableContainer">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {% if displayData %}
+                                                {% for key in displayData[0].keys() %}
+                                                    <th>{{key}}</th>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+    
+                                    <tbody>
+                                        {% if displayData %}
+                                            {% for num in range(0,amountOfData) %}
+                                                <tr>
+                                                    {% for i in displayData[num].values() %}
+                                                        {% if i %}
+                                                            <td>{{ i }}</td>
+                                                        {% else %}
+                                                            <td>No Data</td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 
                     
                 </div>
-				<a href="admin" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
-					<span style='font-size:30px;'>&#11162;</span>
-				</a>
+                <a href="admin" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+                    <span style='font-size:30px;'>&#11162;</span>
+                </a>
                 
             </div>
             
@@ -231,22 +242,5 @@
         </div>
 
     </div>
-
-    <script>
-        function showSection(sectionId) {
-            // Hide all sections
-            const sections = document.querySelectorAll('.section');
-            sections.forEach(section => section.style.display = 'none');
-            
-            // Show the selected section
-            document.getElementById(sectionId).style.display = 'block';
-            
-            // Set the hidden input value to the selected section
-            document.getElementById('selectedSection').value = sectionId;
-            
-            // Submit the form to update the selected section on the server
-            document.getElementById('sectionForm').submit();
-        }
-    </script>
 </body>
 </html>

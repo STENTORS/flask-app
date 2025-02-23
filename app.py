@@ -586,20 +586,22 @@ def postCodeLookup():
         return redirect(url_for('lookup'))
     return redirect(url_for('lookup'))
 
+
 @app.route("/lookup", methods=['GET', 'POST']) 
 def lookup():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Get all tables
     cursor.execute('SHOW TABLES')
     tableList = cursor.fetchall()
 
     # Get selected table from request (default: 'customer')
     tableSelected = request.form.get('tableSelect', 'customer')
-    
+
     # Get columns for the selected table
     cursor.execute(f'SHOW COLUMNS FROM `{tableSelected}`')
     columnList = cursor.fetchall()
+
     columnNames = [col['Field'] for col in columnList]
 
     # Get selected column and data input
@@ -608,45 +610,46 @@ def lookup():
 
     displayData = []
 
+    # Store the selected section in the session
+    if request.method == "POST":
+        selected_section = request.form.get('selectedSection', 'searchPostcodes')
+        session['selected_section'] = selected_section  # Update the session with the new section
+    else:
+        selected_section = session.get('selected_section', 'searchPostcodes')
+
     # Case 1: Searching within a specific column
     if tableSelected and dataSelected and columnSelected:
         query = f"SELECT * FROM `{tableSelected}` WHERE `{columnSelected}` LIKE %s"
         cursor.execute(query, (f"%{dataSelected}%",))
         displayData = cursor.fetchall()
-        print("Searching within specific column")
 
-    # Case 2: Fetching only a specific column's data (without filtering)
+    # Case 2: Fetching only a specific column's data
     elif columnSelected in columnNames:
         query = f"SELECT `{columnSelected}` FROM `{tableSelected}`"
         cursor.execute(query)
         displayData = cursor.fetchall()
-        print("Fetching column data")
 
-    # Case 3: Searching across the entire table for data (no column specified)
+    # Case 3: Searching across the entire table
     elif tableSelected and dataSelected:
         cursor.execute(f"SHOW COLUMNS FROM `{tableSelected}`")
         columns = [col["Field"] for col in cursor.fetchall()]
-        
+
         where_clause = " OR ".join([f"`{col}` LIKE %s" for col in columns])
         query = f"SELECT * FROM `{tableSelected}` WHERE {where_clause}"
         
         cursor.execute(query, tuple([f"%{dataSelected}%"] * len(columns)))
         displayData = cursor.fetchall()
-        print("Searching across all columns")
 
     # Case 4: Default - Fetch all rows from the table
     else:
         query = f"SELECT * FROM `{tableSelected}`"
         cursor.execute(query)
         displayData = cursor.fetchall()
-        print("Fetching all data from table")
 
-    # Get upcoming trips
+    # Fetch upcoming trips
     cursor.execute("SELECT * FROM trip WHERE STR_TO_DATE(Date, '%d/%m/%Y') >= CURDATE() ORDER BY STR_TO_DATE(Date, '%d/%m/%Y') ASC")
     upcomingTrips = cursor.fetchall()
-    print(upcomingTrips)
 
-    # Fetch destination names and other relevant data for each trip
     for trip in upcomingTrips:
         cursor.execute("""
             SELECT d.Destination, d.Hotel, d.Cost, d.Days, c.Registration
@@ -657,17 +660,8 @@ def lookup():
         destination = cursor.fetchone()
 
         if destination:
-            trip['Destination'] = destination['Destination']
-            trip['Hotel'] = destination['Hotel']
-            trip['Cost'] = destination['Cost']
-            trip['Days'] = destination['Days']
-            trip['CoachReg'] = destination['Registration']
+            trip.update(destination)
 
-    print("Upcoming Trips with Destination Names and Additional Details")
-    print(upcomingTrips)
-
-    # Retrieve the selected section and customersPostcode from the session
-    selected_section = session.get('selected_section', 'searchPostcodes')
     customersPostcode = session.get('customersPostcode', [])
 
     return render_template("lookup_tab.html",
@@ -678,6 +672,7 @@ def lookup():
                            selected_section=selected_section,
                            upcomingTrips=upcomingTrips,
                            customersPostcode=customersPostcode)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
