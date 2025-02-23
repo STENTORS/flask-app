@@ -373,6 +373,19 @@ button {
 	color:#385D3D;
 }
 
+.section{
+	justify-content: center;
+	align-items: center;
+	font-family: 'Livvic';
+}
+
+
+
+.section{
+	justify-content: center;
+	align-items: center;
+	font-family: 'Livvic';
+}
 /*.tableContainer::-webkit-scrollbar-track {
 	background:#ACCCB3;
 }

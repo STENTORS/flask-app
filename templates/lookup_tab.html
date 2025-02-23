@@ -94,11 +94,10 @@
 
 					<div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
                         <!-- Content for Search Postcodes -->
-                        <form method="post" action="/postCodeLookup">
-                            <div class="formbox">
+                        <form method="post" action="/postCodeLookup" style="display: flex; align-items: center; justify-content: center;">
+                            <div class="formbox" style="max-width: fit-content; align-items: center;">
                                 <!-- Postcode input Field -->
                                 <input type="text" id="postcode" name="postcode" placeholder="Postcode">
-                                <button type="submit">Search</button>
                             </div>
                         </form>
                     
@@ -162,8 +161,8 @@
 
                     <div id="searchAllData" class="section" style="display: {% if selected_section == 'searchAllData' %}block{% else %}none{% endif %};">
                         <!-- Content for Search All Data -->
-                        <form method="post" action="/lookup">
-                            <div class="formbox">
+                        <form method="post" action="/lookup" style="display: flex; align-items: center; justify-content: center;">
+                            <div class="formbox" style="max-width: fit-content; align-items: center;">
                                 <input type="hidden" name="selectedSection" value="{{ selected_section }}">
                                 
                                 <select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
