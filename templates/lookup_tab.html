@@ -4,138 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="static/style.css"> 
-	<link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
-	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
 </head>
 
 <body>
 
-	<div class="grandparent">
-	
-		<div class="parent title">
-			<h1>SILVER DAWN COACHES DATA ADMIN</h1>
-		</div>
-		
-		<div class="parent">
-			
-			<div class="tab-row">
-			
-				<div class="tab">
-					<a href="home">
-						<p>Customer Details</p>
-					</a>
-				</div>
-				
-				<div class="tab">
-					<a href="booking">
-						<p>Booking Details</p>
-					</a>
-				</div>
-				
-				<div class="active-tab active-middle-tab">
-					<p>Details Lookup</p>
-				</div>
-				
-				<div class="tab">
-					<a href="admin">
-						<p>Admin Access</p>
-					</a>
-				</div>
-	
-			</div>
-			
-			<!--form boxes-->
-			<div class="child" style="border-radius: 20px 20px 20px 20px; flex-direction: row;">
-				
-				<a href="booking" class="arrow-button" style="color: #C1C1C1;">
-					<span style='font-size:30px;'>&#11160;</span>
-				</a>
+    <div class="grandparent">
+    
+        <div class="parent title">
+            <h1>SILVER DAWN COACHES DATA ADMIN</h1>
+        </div>
+        
+        <div class="parent">
+            
+            <div class="tab-row">
+            
+                <div class="tab">
+                    <a href="home">
+                        <p>Customer Details</p>
+                    </a>
+                </div>
+                
+                <div class="tab">
+                    <a href="booking">
+                        <p>Booking Details</p>
+                    </a>
+                </div>
+                
+                <div class="active-tab active-middle-tab">
+                    <p>Details Lookup</p>
+                </div>
+                
+                <div class="tab">
+                    <a href="admin">
+                        <p>Admin Access</p>
+                    </a>
+                </div>
+    
+            </div>
+            
+            <!--form boxes-->
+            <div class="child" style="border-radius: 20px 20px 20px 20px; flex-direction: row;">
+                
+                <a href="booking" class="arrow-button" style="color: #C1C1C1;">
+                    <span style='font-size:30px;'>&#11160;</span>
+                </a>
 
-				<div class="box">
+                <div class="box">
 
-					
-					<form method="get">
-						<div class="formbox">
-							
-							<select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
-								{% for col in tableList %}
-									<option value="{{ col['Tables_in_silerdawncoachesdb'] }}"
-										{% if col['Tables_in_silerdawncoachesdb'] == request.args.get('tableSelect', 'customer') %}
-											selected
-										{% endif %}>
-										{{ col['Tables_in_silerdawncoachesdb'] }}
-									</option>
-								{% endfor %}
-							</select>
-					
-							<!-- Column Select -->
-							<select id="columnSelect" name="columnSelect" onchange="this.form.submit()">
-								<option value="" selected disabled>Select</option>
-								{% for col in columnList %}
-									<option value="{{ col['Field'] }}"
-										{% if col['Field'] == request.args.get('columnSelect') %}
-											selected
-										{% endif %}>
-										{{ col['Field'] }}
-									</option>
-								{% endfor %}
-							</select>
-					
-							<!-- Search Field -->
-							<input type="text" id="dataSelect" name="dataSelect" placeholder="Search">
-						</div>
-					</form>
-					
-					<div class="child" style="border-radius: 20px; width: 100%;">
-						<div class="tableContainer">
-							<table>
-								<thead>
-									<tr>
+                    <div class="formbox formbox-lookup">
+                        <form method="post" action="/lookup" id="sectionForm">
+                            <input type="hidden" id="selectedSection" name="selectedSection" value="{{ selected_section }}">
+                            <button type="button" onclick="showSection('tripPassengers')">Trip Passengers</button>
+                            <button type="button" onclick="showSection('searchPostcodes')">Search Postcodes</button>
+                            <button type="button" onclick="showSection('upcomingTrips')">Upcoming Trips</button>
+                            <button type="button" onclick="showSection('searchAllData')">Search All Data</button>
+                        </form>
+                    </div>
+
+
+
+					<!-- Sections controlled by buttons -->
+					<div id="tripPassengers" class="section" style="display: {% if selected_section == 'tripPassengers' %}block{% else %}none{% endif %};">
+						<h2>Trip Passengers</h2>
+						<!-- Lookup for Trip Passengers by date and destination -->
+						<form method="post" action="/tripLookup">
+							<div class="formbox">
+								
+							</div>
+						</form>
+					</div>
+
+					<div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
+						<h2>Search Postcodes</h2>
+						<!-- Content for Search Postcodes -->
+						<form method="post" action="/postCodeLookup">
+							<div class="formbox">
+								<!-- Postcode input Field -->
+								<input type="text" id="dataSelect" name="dataSelect" placeholder="Postcode">
+							</div>
+						</form>
+					</div>
+
+					<div id="upcomingTrips" class="section" style="display: {% if selected_section == 'upcomingTrips' %}block{% else %}none{% endif %};">
+						<h2>Upcoming Trips</h2>
+						<!-- Content for Upcoming Trips -->
+						 {{upcomingTrips}}
+						 
+					</div>
+
+					<div id="searchAllData" class="section" style="display: {% if selected_section == 'searchAllData' %}block{% else %}none{% endif %};">
+						<!-- Content for Search All Data -->
+						<form method="post" action="/lookup">
+							<div class="formbox">
+								<input type="hidden" name="selectedSection" value="{{ selected_section }}">
+								
+								<select id="tableSelect" name="tableSelect" onchange="this.form.submit()">
+									{% for col in tableList %}
+										<option value="{{ col['Tables_in_silerdawncoachesdb'] }}"
+											{% if col['Tables_in_silerdawncoachesdb'] == request.args.get('tableSelect', 'customer') %}
+												selected
+											{% endif %}>
+											{{ col['Tables_in_silerdawncoachesdb'] }}
+										</option>
+									{% endfor %}
+								</select>
+						
+								<!-- Column Select -->
+								<select id="columnSelect" name="columnSelect" onchange="this.form.submit()">
+									<option value="" selected disabled>Select</option>
+									{% for col in columnList %}
+										<option value="{{ col['Field'] }}"
+											{% if col['Field'] == request.args.get('columnSelect') %}
+												selected
+											{% endif %}>
+											{{ col['Field'] }}
+										</option>
+									{% endfor %}
+								</select>
+						
+								<!-- Search Field -->
+								<input type="text" id="dataSelect" name="dataSelect" placeholder="Search">
+							</div>
+						</form>
+						
+						<div class="child" style="border-radius: 20px; width: 100%;">
+							<div class="tableContainer">
+								<table>
+									<thead>
+										<tr>
+											{% if displayData %}
+												{% for key in displayData[0].keys() %}
+													<th>{{key}}</th>
+												{% endfor %}
+											{% endif %}
+										</tr>
+									</thead>
+	
+									<tbody>
 										{% if displayData %}
-											{% for key in displayData[0].keys() %}
-												<th>{{key}}</th>
+											{% for num in range(0,amountOfData) %}
+												<tr>
+													{% for i in displayData[num].values() %}
+														{% if i %}
+															<td>{{ i }}</td>
+														{% else %}
+															<td>No Data</td>
+														{% endif %}
+													{% endfor %}
+												</tr>
 											{% endfor %}
 										{% endif %}
-									</tr>
-								</thead>
-
-								<tbody>
-									{% if displayData %}
-										{% for num in range(0,amountOfData) %}
-											<tr>
-												{% for i in displayData[num].values() %}
-													{% if i %}
-														<td>{{ i }}</td>
-													{% else %}
-														<td>No Data</td>
-													{% endif %}
-												{% endfor %}
-											</tr>
-										{% endfor %}
-									{% endif %}
-									
-								</tbody>
-							</table>
+										
+									</tbody>
+								</table>
+							</div>
 						</div>
-
-						<a href="admin" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
-							<span style='font-size:30px;'>&#11162;</span>
-						</a>
-						
 					</div>
-				
-					
-				</div>
-				
-			</div>
-			
-		</div>
+                
+                    
+                </div>
+				<a href="admin" class="arrow-button" style="color: #C1C1C1; margin-left: 0.4em;">
+					<span style='font-size:30px;'>&#11162;</span>
+				</a>
+                
+            </div>
+            
+           
+            
+        </div>
 
-		
+    </div>
 
-		
-	
-	</div>
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.style.display = 'none');
+            
+            // Show the selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Set the hidden input value to the selected section
+            document.getElementById('selectedSection').value = sectionId;
+            
+            // Submit the form to update the selected section on the server
+            document.getElementById('sectionForm').submit();
+        }
+    </script>
 </body>
 </html>

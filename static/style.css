@@ -348,6 +348,31 @@ button {
 	padding: 15px;
 }
 
+.formbox-lookup button, input{
+	background-color:#839B85;
+	padding:10px;
+	border-radius: 9px;
+	margin-left: 1em;
+	outline:none;
+	border:none;
+	width:85%;
+	font-size:1em;
+	justify-content:right;
+	font-family: 'Livvic';
+	color:#373737;
+}
+
+.formbox-lookup form{
+	display: flex;
+	justify-content: center;
+	align-items:center;
+	border-radius: 20px;
+	background-color: #D9D9D9;
+	width: 100%;
+	font-family: 'Livvic';
+	color:#385D3D;
+}
+
 /*.tableContainer::-webkit-scrollbar-track {
 	background:#ACCCB3;
 }

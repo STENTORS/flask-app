@@ -578,7 +578,7 @@ def lookup():
     tableList = cursor.fetchall()
 
     # Get selected table from request (default: 'customer')
-    tableSelected = request.args.get('tableSelect', 'customer')
+    tableSelected = request.form.get('tableSelect', 'customer')
     
     # Get columns for the selected table
     cursor.execute(f'SHOW COLUMNS FROM `{tableSelected}`')
@@ -586,8 +586,8 @@ def lookup():
     columnNames = [col['Field'] for col in columnList]
 
     # Get selected column and data input
-    columnSelected = request.args.get('columnSelect')
-    dataSelected = request.args.get('dataSelect')
+    columnSelected = request.form.get('columnSelect')
+    dataSelected = request.form.get('dataSelect')
 
     displayData = []
 
@@ -624,13 +624,22 @@ def lookup():
         displayData = cursor.fetchall()
         print("Fetching all data from table")
 
-    cursor.close()
+    # Get upcoming trips
+    cursor.execute("SELECT * FROM trip WHERE STR_TO_DATE(Date, '%d/%m/%Y') >= CURDATE() ORDER BY STR_TO_DATE(Date, '%d/%m/%Y') ASC")
+    upcomingTrips = cursor.fetchall()
+    print(upcomingTrips)
+
     
+
+    selected_section = request.args.get('selectedSection') or request.form.get('selectedSection')
+
     return render_template("lookup_tab.html",
                            tableList=tableList,
                            columnList=columnList,
                            displayData=displayData,
-                           amountOfData=len(displayData))
+                           amountOfData=len(displayData),
+                           selected_section=selected_section,
+                           upcomingTrips=upcomingTrips)
 
 if __name__ == "__main__":
     app.run(debug=True)
