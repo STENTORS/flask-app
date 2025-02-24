@@ -144,10 +144,6 @@ def newTrip():
 
 
 
-
-
-
-
 @app.route("/access", methods=['GET', 'POST'])
 def access():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -217,7 +213,7 @@ def access():
                 # Add action logic
                 if action == "add":
                     cursor.execute(f'SHOW COLUMNS FROM `{tableForm}`')
-                    attributes = cursor.fetchall()
+                    attributes = cursor.fetchall()[1:]  # Exclude the primary key (first column)
                     return render_template("access_tab.html", title="Admin | Edit", tables=tables, action=action, attributes=attributes, tableForm=tableForm, adminAction=adminAction)
 
                 elif action == "remove":
@@ -241,7 +237,7 @@ def add():
     tables = cursor.fetchall()
 
     cursor.execute(f'SHOW COLUMNS FROM `{tableForm}`')
-    attributes = cursor.fetchall()
+    attributes = cursor.fetchall()[1:]  # Exclude the primary key (first column)
     columnNames = [col['Field'] for col in attributes]
 
     if request.method == "POST":
@@ -263,32 +259,20 @@ def add():
                            attributes=attributes,
                            tableForm=tableForm)
 
-@app.route('/delete', methods=['GET', 'POST'])
+
+@app.route('/delete', methods=['GET'])
 def delete():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SHOW TABLES")
-    tables = cursor.fetchall()
+    tableForm = session.get('tableForm')
     idRemove = request.args.get('id')
-    print("Remove ID:", idRemove)
-    tableForm = session.pop('tableForm')
-    action = session.pop('action')
     cursor.execute(f'SHOW COLUMNS FROM `{tableForm}`')
     columnList = cursor.fetchall()
-    query = f"SELECT * FROM `{tableForm}`"
-    cursor.execute(query)
-    displayData = cursor.fetchall()
     columnNames = [col['Field'] for col in columnList]
-    query = f"DELETE FROM {tableForm} WHERE {columnNames[0]} = %s"
+    query = f"DELETE FROM `{tableForm}` WHERE `{columnNames[0]}` = %s"
     cursor.execute(query, (idRemove,))
     mysql.connection.commit()
 
-    return render_template("access_tab.html",
-                           title="Admin | Edit",
-                           tables=tables,
-                           action=action,
-                           tableList=tableForm,
-                           displayData=displayData,
-                           amountOfData=len(displayData))
+    return redirect(url_for('access'))
 
 @app.route('/action', methods=['POST'])
 def action():
@@ -296,10 +280,8 @@ def action():
     if adminAction:
         session['adminAction'] = adminAction
     return redirect(url_for('access'))
-
-
-
-
+    
+                   
 
 
 
