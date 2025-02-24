@@ -3,7 +3,6 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import secrets
 import re
-import geonamescache
 from datetime import datetime
 
 app = Flask(__name__)
@@ -41,18 +40,8 @@ def home():
         validEmail = re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email)
         validPost = re.match(r'^([A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2})$', postCode)
 
-        # Get list of valid cities
-        gc = geonamescache.GeonamesCache()
-        cities = gc.get_cities()
-        cityNames = [cityData['name'] for cityData in cities.values()]
-
-        if city in cityNames:
-            validCity = True
-        else:
-            validCity = False
-
         # Check required fields and validation
-        if fname.isalpha() and lname.isalpha() and email and validEmail and validPost and len(phone) <= 20 and validCity:
+        if fname.isalpha() and lname.isalpha() and email and validEmail and validPost and len(phone) <= 20:
             try:
                 query = """INSERT INTO customer 
                             (`First Name`, `Surname`, `Email`, `Address Line 1`,
@@ -70,8 +59,7 @@ def home():
             msg = "Enter a valid email"
         elif len(phone) > 20:
             msg = "Enter a valid phone number"
-        elif not validCity:
-            msg = "Enter a valid city name"
+
         elif not validPost:
             msg = "Enter a valid PostCode"
 
@@ -280,8 +268,8 @@ def action():
     if adminAction:
         session['adminAction'] = adminAction
     return redirect(url_for('access'))
-    
-                   
+
+
 
 
 
