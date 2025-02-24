@@ -3,7 +3,8 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import secrets
 import re
-from datetime import datetime
+import geonamescache
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -40,8 +41,18 @@ def home():
         validEmail = re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email)
         validPost = re.match(r'^([A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2})$', postCode)
 
+        # Get list of valid cities
+        gc = geonamescache.GeonamesCache()
+        cities = gc.get_cities()
+        cityNames = [cityData['name'] for cityData in cities.values()]
+
+        if city in cityNames:
+            validCity = True
+        else:
+            validCity = False
+
         # Check required fields and validation
-        if fname.isalpha() and lname.isalpha() and email and validEmail and validPost and len(phone) <= 20:
+        if fname.isalpha() and lname.isalpha() and email and validEmail and validPost and len(phone) <= 20 and validCity:
             try:
                 query = """INSERT INTO customer 
                             (`First Name`, `Surname`, `Email`, `Address Line 1`,
@@ -59,11 +70,14 @@ def home():
             msg = "Enter a valid email"
         elif len(phone) > 20:
             msg = "Enter a valid phone number"
-
+        elif not validCity:
+            msg = "Enter a valid city name"
         elif not validPost:
             msg = "Enter a valid PostCode"
 
     return render_template('index.html', title="Home", msg=msg)
+
+
 
 
 @app.route("/admin", methods=['GET', 'POST'])
@@ -71,16 +85,34 @@ def admin():
     msg = None
     if 'dismiss' in request.args:
         msg = None
-        
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username == "goober" and password == "root":
+        login_attempts = session.get('login_attempts', 0)
+        last_attempt_time = session.get('last_attempt_time')
+
+        if last_attempt_time:
+            last_attempt_time = datetime.strptime(last_attempt_time, '%Y-%m-%d %H:%M:%S.%f')
+            if datetime.now() - last_attempt_time < timedelta(minutes=5):
+                msg = "Too many login attempts. Please try again later."
+                return render_template("admin_tab.html", title="Admin Login", msg=msg)
+
+        if login_attempts >= 3:
+            session['last_attempt_time'] = str(datetime.now())
+            msg = "Too many login attempts. Please try again later."
+        elif username == "goober" and password == "root":
+            session['admin_logged_in'] = True
+            session['login_attempts'] = 0  # Reset login attempts on successful login
             return redirect(url_for('access'))
         else:
+            session['login_attempts'] = login_attempts + 1
             msg = "Incorrect Credential"
             print(msg)
-    return render_template("admin_tab.html", title="Admin Login",msg=msg)
+
+    return render_template("admin_tab.html", title="Admin Login", msg=msg)
+
+
 
 @app.route("/trip", methods=['GET', 'POST'])
 def trip():
@@ -134,6 +166,9 @@ def newTrip():
 
 @app.route("/access", methods=['GET', 'POST'])
 def access():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
         cursor.execute("SHOW TABLES")
@@ -216,6 +251,9 @@ def access():
     finally:
         cursor.close()
 
+
+
+
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -268,11 +306,6 @@ def action():
     if adminAction:
         session['adminAction'] = adminAction
     return redirect(url_for('access'))
-
-
-
-
-
 
 
 @app.route('/finance', methods=['GET', 'POST'])
