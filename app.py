@@ -19,12 +19,14 @@ app.config['MYSQL_DB'] = 'silerdawncoachesdb'
 
 mysql = MySQL(app)
 
-
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     msg = None
+    form_data = {}
+    invalid_fields = []
+
     if 'dismiss' in request.args:
         msg = None
 
@@ -38,6 +40,18 @@ def home():
         addressTwo = request.form.get("address2")
         postCode = request.form.get("postcode")
         notes = request.form.get("notes")
+
+        form_data = {
+            'fname': fname,
+            'lname': lname,
+            'email': email,
+            'phone': phone,
+            'city': city,
+            'address1': addressOne,
+            'address2': addressTwo,
+            'postcode': postCode,
+            'notes': notes
+        }
 
         # Regex validation
         validEmail = re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email)
@@ -63,21 +77,31 @@ def home():
                 cursor.execute(query, (fname, lname, email, addressOne, addressTwo, city, postCode, phone, notes))
                 mysql.connection.commit()
                 msg = "Customer Added!"
+                form_data = {}  # Clear form data on successful submission
             except Exception as e:
                 print(e)
                 msg = "Customer could not be added"
-        elif not fname.isalpha() or not lname.isalpha():
-            msg = "Enter a valid name"
-        elif not validEmail:
-            msg = "Enter a valid email"
-        elif len(phone) > 20:
-            msg = "Enter a valid phone number"
-        elif not validCity:
-            msg = "Enter a valid city name"
-        elif not validPost:
-            msg = "Enter a valid PostCode"
+        else:
+            if not fname.isalpha():
+                invalid_fields.append('fname')
+                msg = "Enter a valid first name"
+            if not lname.isalpha():
+                invalid_fields.append('lname')
+                msg = "Enter a valid last name"
+            if not validEmail:
+                invalid_fields.append('email')
+                msg = "Enter a valid email"
+            if len(phone) > 20:
+                invalid_fields.append('phone')
+                msg = "Enter a valid phone number"
+            if not validCity:
+                invalid_fields.append('city')
+                msg = "Enter a valid city name"
+            if not validPost:
+                invalid_fields.append('postcode')
+                msg = "Enter a valid PostCode"
 
-    return render_template('index.html', title="Home", msg=msg)
+    return render_template('index.html', title="Home", msg=msg, form_data=form_data, invalid_fields=invalid_fields)
 
 
 
