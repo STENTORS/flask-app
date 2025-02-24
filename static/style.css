@@ -82,7 +82,7 @@ body{
 	background-color: #839B85;
 	padding: 8px;
 	height:50px;
-	color:#385D3D;
+	color:#373737;
 	width:25%;
 	font-weight: bold;
 	text-align:center;
@@ -93,12 +93,12 @@ body{
 
 a:link {
   text-decoration: none;
-  color:#385D3D;
+  color:#373737;
 }
 
 a:visited {
   text-decoration: none;
-  color:#385D3D;
+  color:#373737;
 }
 
 a:hover {
@@ -388,7 +388,20 @@ button {
 }
 
 
-
+.logo {
+    display: block;
+    margin: 0 auto;
+    width: 120px; 
+    height: 30px; 
+	padding: 30px;
+    background-image: url('/static/logo.png'); 
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+	border-radius: 40px;
+	border: #839B85 3px solid;
+	background-color: #FF464C;
+}
 
 
 /*.tableContainer::-webkit-scrollbar-track {
