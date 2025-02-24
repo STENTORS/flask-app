@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import secrets
 import re
 import geonamescache
 from datetime import datetime, timedelta
+from fpdf import FPDF
+import io
 
 app = Flask(__name__)
 
@@ -570,6 +572,7 @@ def postCodeLookup():
     if request.method == "POST":
         postcode = request.form.get('postcode')
         print(postcode)
+        session['postcode'] = postcode
     
         # Use a LIKE query with a wildcard to match postcodes that start with the given input
         cursor.execute("SELECT * FROM customer WHERE Postcode LIKE %s", (postcode + '%',))
@@ -580,6 +583,49 @@ def postCodeLookup():
         
         return redirect(url_for('lookup'))
     return redirect(url_for('lookup'))
+
+
+
+
+
+@app.route('/generatePdf', methods=['GET'])
+def generatePdf():
+    customerDataPdf = session.get('customersPostcode')
+    postcode = session.get('postcode')
+   
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Add table headers
+    headers = ["Name", "Address Line 1", "Address Line 2", "Postcode"]
+    for header in headers:
+        pdf.cell(40, 10, header, 1)
+    pdf.ln()
+
+    # Add table rows
+    if customerDataPdf:
+        for row in customerDataPdf:
+            name = f"{row['First Name']} {row['Surname']}"
+            address1 = row['Address Line 1']
+            address2 = row['Address Line 2']
+            postcodeTb = row['Postcode']
+            pdf.cell(40, 10, name, 1)
+            pdf.cell(40, 10, address1, 1)
+            pdf.cell(40, 10, address2, 1)
+            pdf.cell(40, 10, postcodeTb, 1)
+            pdf.ln()
+
+    # Save the PDF to a BytesIO object
+    pdf_output = io.BytesIO()
+    pdf_output.write(pdf.output(dest='S').encode('latin1'))
+    pdf_output.seek(0)
+    # Get the current date
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    print(f"search: {postcode}")
+    # Create the file name
+    file_name = f"{postcode}_{current_date}.pdf"
+    return send_file(pdf_output, download_name=file_name, as_attachment=True)
 
 
 @app.route("/lookup", methods=['GET', 'POST']) 

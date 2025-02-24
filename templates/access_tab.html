@@ -63,7 +63,6 @@
                         <div class="box">
                             <form method="post" action="/finance">
                                 <div class="formbox">
-                                    <label for="finaceTrip">Trip Select:</label>
                                     <select id="finaceTrip" name="finaceTrip" onchange="this.form.submit()">
                                         {% for destination in financeArray %}
                                             {% if finaceTrip %}
@@ -194,7 +193,6 @@
                         <div class="box">
                             <form method="post" action="/access">
                                 <div class="formbox">
-                                    <label for="tableSelect">Table Select:</label>
                                     <select id="tableSelect" name="tableSelect" style="width: max-content;" onchange="this.form.submit()">
                                         {% for table in tables %}
                                             {% if table['Tables_in_silerdawncoachesdb'] in ['driver', 'destination', 'coach'] %}

@@ -149,16 +149,21 @@
                     <div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
                         <!-- Content for Search Postcodes -->
                         <form method="post" action="/postCodeLookup" style="display: flex; align-items: center; justify-content: center;">
-                            <div class="formbox" style="max-width: fit-content; align-items: center;">
+                            <div class="formbox formbox-lookup" style="max-width: fit-content; align-items: center;">
                                 <!-- Postcode input Field -->
                                 <input type="text" id="postcode" name="postcode" placeholder="Postcode">
+
+                                <button>
+                                    <a href="{{ url_for('generatePdf') }}" class="button">Print to PDF</a>
+                                </button>
+                                
                             </div>
                         </form>
                     
                         <!-- Display customersPostcode data -->
                         {% if customersPostcode %}
-                            <div class="tableContainer">
-                                <table>
+                            <div class="tableContainer" id="postcodeTableContainer">
+                                <table id="postcodeTable">
                                     <thead>
                                         <tr>
                                             {% for key in customersPostcode[0].keys() %}
@@ -177,6 +182,7 @@
                                     </tbody>
                                 </table>
                             </div>
+                            
                         {% endif %}
                     </div>
 
