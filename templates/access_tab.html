@@ -53,15 +53,12 @@
                         <form method="post" action="/action">
                             <button type="submit" name="adminAction" value="edit" class="tablinks">Edit</button>
                             <button type="submit" name="adminAction" value="finance" class="tablinks">Finance</button>
-                            <button type="submit" name="adminAction" value="trip" class="tablinks">Trip</button>
                         </form>
                         
                     </div>
             
-
-                    
                     <div class="child" style="align-items: center;">
-                        <!-- Finance Admin Dasboard -->
+                        <!-- Finance Admin Dashboard -->
                         {% if adminAction == "finance" %}
                         <div class="box">
                             <form method="post" action="/finance">
@@ -153,6 +150,123 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% endif %}
+                        
+                        <!-- Trip Admin Dashboard -->
+                        {% if adminAction == "trip" %}
+                        <div class="box">
+                            <form method="post" action="/addTrip">
+                                <div class="formbox">
+                                    <label for="destination">Destination:</label>
+                                    <select id="destination" name="destination">
+                                        {% for destination in destinations %}
+                                            <option value="{{ destination['DestinationID'] }}">{{ destination['Destination'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="formbox">
+                                    <label for="driver">Driver:</label>
+                                    <select id="driver" name="driver">
+                                        {% for driver in drivers %}
+                                            <option value="{{ driver['DriverID'] }}">{{ driver['Driver'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="formbox">
+                                    <label for="date">Date:</label>
+                                    <input type="date" id="date" name="date" required>
+                                </div>
+                                <div class="formbox">
+                                    <label for="coach">Coach:</label>
+                                    <select id="coach" name="coach">
+                                        {% for coach in coaches %}
+                                            <option value="{{ coach['CoachID'] }}">{{ coach['Registration'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit">Add Trip</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Edit Admin Dashboard -->
+                        {% if adminAction == "edit" %}
+                        <div class="box">
+                            <form method="post" action="/access">
+                                <div class="formbox">
+                                    <label for="tableSelect">Table Select:</label>
+                                    <select id="tableSelect" name="tableSelect" style="width: max-content;" onchange="this.form.submit()">
+                                        {% for table in tables %}
+                                            {% if table['Tables_in_silerdawncoachesdb'] in ['driver', 'destination', 'coach'] %}
+                                                <option value="{{ table['Tables_in_silerdawncoachesdb'] }}" {% if table['Tables_in_silerdawncoachesdb'] == request.form.get('tableSelect', '') %}selected{% endif %}>
+                                                    {{ table['Tables_in_silerdawncoachesdb'] }}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                
+                                    <select id="doWhat" name="doWhat" style="width: max-content;" onchange="this.form.submit()">
+                                        <option value="add" {% if request.form.get('doWhat', '') == 'add' %}selected{% endif %}>Add</option>
+                                        <option value="remove" {% if request.form.get('doWhat', '') == 'remove' %}selected{% endif %}>Remove</option>
+                                    </select>
+                                </div>
+                            </form>
+                        
+                            {% if action == "add" %}
+                                <form method="POST" action="add">
+                                    {% for i in attributes %}
+                                        <div class="formbox">
+                                            <label for="{{i['Field']}}">{{i['Field']}}</label>
+                                            <input type="text" id="{{i['Field']}}" name="{{i['Field']}}">
+                                        </div>
+                                    {% endfor %}
+                                    <div class="child-below">
+                                        <div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
+                                            <button type="submit">Submit</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% elif action == "remove" %}
+                                <div class="child" style="border-radius: 20px; width: 100%; flex-direction: column;">
+                                    <div class="tableContainer">
+                                        <table id="data-table">
+                                            <thead>
+                                                <tr>
+                                                    {% if displayData %}
+                                                        {% for key in displayData[0].keys() %}
+                                                            <th>{{ key }}</th>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                    <th>Remove</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if displayData %}
+                                                    {% for num in range(0, amountOfData) %}
+                                                        <tr data-id="{{ displayData[num]['id'] }}">
+                                                            {% for i in displayData[num].values() %}
+                                                                {% if i %}
+                                                                    <td>{{ i }}</td>
+                                                                {% else %}
+                                                                    <td>No Data</td>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            <td>
+                                                                <form method="get" action="delete">
+                                                                    <input type="hidden" name="id" value="{{ displayData[num].values()|list|first }}">
+                                                                    <button action="submit">
+                                                                        <span style='font-size:27px; cursor: pointer;'>&#128465;</span>
+                                                                    </button>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>

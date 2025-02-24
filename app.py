@@ -143,6 +143,11 @@ def newTrip():
     return redirect(url_for('booking'))
 
 
+
+
+
+
+
 @app.route("/access", methods=['GET', 'POST'])
 def access():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -158,18 +163,18 @@ def access():
             destinations = cursor.fetchall()
             
             cursor.execute(f'SELECT * FROM driver;')
-            driver = cursor.fetchall()
+            drivers = cursor.fetchall()
 
             cursor.execute(f'SELECT * FROM coach;')
-            coach = cursor.fetchall()
+            coaches = cursor.fetchall()
 
             return render_template("access_tab.html",
-                                    title="Admin | Edit",
+                                    title="Admin | Trip",
                                     tables=tables,
                                     adminAction=adminAction, 
                                     destinations=destinations, 
-                                    driver=driver, 
-                                    coach=coach)
+                                    drivers=drivers, 
+                                    coaches=coaches)
         
         if adminAction == "finance":
             cursor.execute("SELECT * FROM silerdawncoachesdb.destination")
@@ -182,7 +187,7 @@ def access():
             total_revenue = session.get('total_revenue')
 
             return render_template("access_tab.html",
-                                   title="Admin | Edit",
+                                   title="Admin | Finance",
                                    tables=tables,
                                    adminAction=adminAction, 
                                    financeArray=financeArray,
@@ -192,67 +197,40 @@ def access():
                                    percentage_seats_booked=percentage_seats_booked,
                                    total_revenue=total_revenue)
 
-        if request.method == "POST":
-            tableForm = request.form.get("tableSelect")
-            action = request.form.get("doWhat")
+        if adminAction == "edit":
+            if request.method == "POST":
+                tableForm = request.form.get("tableSelect")
+                action = request.form.get("doWhat")
 
-            if not tableForm or not action:
-                return render_template("access_tab.html", title="Admin | Edit", tables=tables, msg="Select a table and action.")
+                if not tableForm or not action:
+                    return render_template("access_tab.html", title="Admin | Edit", tables=tables, msg="Select a table and action.")
 
-            # Store in session safely
-            session['tableForm'] = tableForm
-            session['action'] = action
+                # Store in session safely
+                session['tableForm'] = tableForm
+                session['action'] = action
 
-            # Check if table exists before querying
-            validTables = [t['Tables_in_silerdawncoachesdb'] for t in tables]
-            if tableForm not in validTables:
-                return render_template("access_tab.html", title="Admin | Edit", tables=tables, msg="Invalid table selection.")
+                # Check if table exists before querying
+                validTables = ['driver', 'destination', 'coach']
+                if tableForm not in validTables:
+                    return render_template("access_tab.html", title="Admin | Edit", tables=tables, msg="Invalid table selection.")
 
-            # Add action logic
-            if action == "add":
-                cursor.execute(f'SHOW COLUMNS FROM `{tableForm}`')
-                attributes = cursor.fetchall()[1:]
-                return render_template("access_tab.html", title="Admin | Edit", tables=tables, action=action, attributes=attributes, tableForm=tableForm, adminAction=adminAction)
+                # Add action logic
+                if action == "add":
+                    cursor.execute(f'SHOW COLUMNS FROM `{tableForm}`')
+                    attributes = cursor.fetchall()
+                    return render_template("access_tab.html", title="Admin | Edit", tables=tables, action=action, attributes=attributes, tableForm=tableForm, adminAction=adminAction)
 
-            elif action == "remove":
-                cursor.execute(f"SELECT * FROM `{tableForm}`")
-                displayData = cursor.fetchall()
-                return render_template("access_tab.html", title="Admin | Edit", tables=tables, action=action, tableList=tableForm, displayData=displayData, amountOfData=len(displayData), adminAction=adminAction)
+                elif action == "remove":
+                    cursor.execute(f"SELECT * FROM `{tableForm}`")
+                    displayData = cursor.fetchall()
+                    return render_template("access_tab.html", title="Admin | Edit", tables=tables, action=action, tableList=tableForm, displayData=displayData, amountOfData=len(displayData), adminAction=adminAction)
+
+            return render_template("access_tab.html", title="Admin | Edit", tables=tables, adminAction=adminAction)
 
         return render_template("access_tab.html", title="Admin | Edit", tables=tables, adminAction=adminAction)
 
     finally:
         cursor.close()
-
-@app.route("/addTrip", methods=['GET', 'POST'])
-def addTrip():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-    destination = request.form.get('destination')
-    driver = request.form.get('driver')
-    date = request.form.get('date')
-    coach = request.form.get('coach')
-
-    
-    try:
-        date = datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
-        query = "INSERT INTO trip (DestinationID, DriverID, Date, CoachID) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (destination, driver, date, coach))
-
-        mysql.connection.commit()
-    except:
-        print(destination, driver, date, coach)
-
-    return redirect(url_for('access'))
-
-@app.route("/action", methods=['GET', 'POST'])
-def action():
-    adminAction = request.form.get('adminAction')
-    if adminAction:
-        session['adminAction'] = adminAction
-
-    return redirect(url_for('access'))
-
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
@@ -285,7 +263,6 @@ def add():
                            attributes=attributes,
                            tableForm=tableForm)
 
-
 @app.route('/delete', methods=['GET', 'POST'])
 def delete():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -312,6 +289,21 @@ def delete():
                            tableList=tableForm,
                            displayData=displayData,
                            amountOfData=len(displayData))
+
+@app.route('/action', methods=['POST'])
+def action():
+    adminAction = request.form.get('adminAction')
+    if adminAction:
+        session['adminAction'] = adminAction
+    return redirect(url_for('access'))
+
+
+
+
+
+
+
+
 
 @app.route('/finance', methods=['GET', 'POST'])
 def finance():
