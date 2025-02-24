@@ -601,7 +601,6 @@ def lookup():
     # Get columns for the selected table
     cursor.execute(f'SHOW COLUMNS FROM `{tableSelected}`')
     columnList = cursor.fetchall()
-
     columnNames = [col['Field'] for col in columnList]
 
     # Get selected column and data input
@@ -662,7 +661,15 @@ def lookup():
         if destination:
             trip.update(destination)
 
+    # Fetch destinations and trip dates for the Trip Passengers section
+    cursor.execute("SELECT DISTINCT DestinationID, Destination FROM destination")
+    destinations = cursor.fetchall()
+
+    cursor.execute("SELECT DISTINCT Date FROM trip")
+    tripDates = cursor.fetchall()
+
     customersPostcode = session.get('customersPostcode', [])
+    passengers = session.get('passengers', [])
 
     return render_template("lookup_tab.html",
                            tableList=tableList,
@@ -671,7 +678,42 @@ def lookup():
                            amountOfData=len(displayData),
                            selected_section=selected_section,
                            upcomingTrips=upcomingTrips,
-                           customersPostcode=customersPostcode)
+                           customersPostcode=customersPostcode,
+                           destinations=destinations,
+                           tripDates=tripDates,
+                           passengers=passengers)
+
+@app.route('/tripPassengersLookup', methods=['POST'])
+def tripPassengersLookup():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    tripDestination = request.form.get('tripDestination')
+    tripDate = request.form.get('tripDate')
+
+    # Fetch passenger details for the selected trip
+    cursor.execute("""
+        SELECT c.`First Name`, c.Surname, c.Email, c.`Phone Number`, b.`Special Request`
+        FROM booking b
+        JOIN customer c ON b.CustomerID = c.CustomerID
+        JOIN trip t ON b.TripID = t.TripID
+        WHERE t.DestinationID = %s AND t.Date = %s
+    """, (tripDestination, tripDate))
+    passengers = cursor.fetchall()
+
+    session['passengers'] = passengers
+    session['selected_section'] = 'tripPassengers'
+
+    return redirect(url_for('lookup'))
+
+@app.route('/getTripDates', methods=['GET'])
+def getTripDates():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    destination_id = request.args.get('destination')
+    
+    cursor.execute("SELECT Date FROM trip WHERE DestinationID = %s", (destination_id,))
+    dates = cursor.fetchall()
+    date_list = [date['Date'] for date in dates]
+    
+    return {'dates': date_list}
 
 
 if __name__ == "__main__":

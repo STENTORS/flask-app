@@ -7,22 +7,37 @@
     <link href='https://fonts.googleapis.com/css?family=Livvic' rel='stylesheet'>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
-	<script>
-		function showSection(sectionId) {
-			// Hide all sections
-			document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
-			
-			// Show the selected section
-			document.getElementById(sectionId).style.display = 'block';
-	
-			// Set the hidden input value to store selected section
-			document.getElementById('selectedSection').value = sectionId;
-	
-			// Submit the form to update session value
-			document.getElementById('sectionForm').submit();
-		}
-	</script>
-	
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
+            
+            // Show the selected section
+            document.getElementById(sectionId).style.display = 'block';
+    
+            // Set the hidden input value to store selected section
+            document.getElementById('selectedSection').value = sectionId;
+    
+            // Submit the form to update session value
+            document.getElementById('sectionForm').submit();
+        }
+
+        function fetchTripDates() {
+            const tripDestination = document.getElementById('tripDestination').value;
+            fetch(`/getTripDates?destination=${tripDestination}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tripDateSelect = document.getElementById('tripDate');
+                    tripDateSelect.innerHTML = '';
+                    data.dates.forEach(date => {
+                        const option = document.createElement('option');
+                        option.value = date;
+                        option.textContent = date;
+                        tripDateSelect.appendChild(option);
+                    });
+                });
+        }
+    </script>
 </head>
 
 <body>
@@ -72,27 +87,66 @@
 
                     <div class="formbox formbox-lookup">
                         <form method="post" action="/lookup" id="sectionForm">
-							<input type="hidden" id="selectedSection" name="selectedSection" value="{{ selected_section }}">
-							<button type="button" onclick="showSection('tripPassengers')">Trip Passengers</button>
-							<button type="button" onclick="showSection('searchPostcodes')">Search Postcodes</button>
-							<button type="button" onclick="showSection('upcomingTrips')">Upcoming Trips</button>
-							<button type="button" onclick="showSection('searchAllData')">Search All Data</button>
-						</form>
-						
+                            <input type="hidden" id="selectedSection" name="selectedSection" value="{{ selected_section }}">
+                            <button type="button" onclick="showSection('tripPassengers')">Trip Passengers</button>
+                            <button type="button" onclick="showSection('searchPostcodes')">Search Postcodes</button>
+                            <button type="button" onclick="showSection('upcomingTrips')">Upcoming Trips</button>
+                            <button type="button" onclick="showSection('searchAllData')">Search All Data</button>
+                        </form>
                     </div>
 
                     <!-- Sections controlled by buttons -->
                     <div id="tripPassengers" class="section" style="display: {% if selected_section == 'tripPassengers' %}block{% else %}none{% endif %};">
-                        <h2>Trip Passengers</h2>
                         <!-- Lookup for Trip Passengers by date and destination -->
-                        <form method="post" action="/tripLookup">
-                            <div class="formbox">
-                                
+                        <form method="post" action="/tripPassengersLookup">
+                            <div class="formbox formbox-lookup">
+                                <select id="tripDestination" name="tripDestination" onchange="fetchTripDates()" required>
+                                    <option value="" disabled selected>Destination</option>
+                                    {% for destination in destinations %}
+                                        <option value="{{ destination['DestinationID'] }}">{{ destination['Destination'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            
+                                <select id="tripDate" name="tripDate" required>
+                                    <option value="" disabled selected>Date</option>
+                                    <!-- Dates from JavaScript -->
+                                </select>
+                            
+                           
+                                <button type="submit">Search</button>
                             </div>
                         </form>
+
+                        <!-- Display passenger details -->
+                        {% if passengers %}
+                            <div class="tableContainer">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Email</th>
+                                            <th>Phone Number</th>
+                                            <th>Special Request</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for passenger in passengers %}
+                                            <tr>
+                                                <td>{{ passenger['First Name'] }}</td>
+                                                <td>{{ passenger['Surname'] }}</td>
+                                                <td>{{ passenger['Email'] }}</td>
+                                                <td>{{ passenger['Phone Number'] }}</td>
+                                                <td>{{ passenger['Special Request'] }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
                     </div>
 
-					<div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
+                    <div id="searchPostcodes" class="section" style="display: {% if selected_section == 'searchPostcodes' %}block{% else %}none{% endif %};">
                         <!-- Content for Search Postcodes -->
                         <form method="post" action="/postCodeLookup" style="display: flex; align-items: center; justify-content: center;">
                             <div class="formbox" style="max-width: fit-content; align-items: center;">
@@ -131,9 +185,6 @@
                         <div class="tableContainer">
                             <table>
                                 <thead>
-                                    <tr>
-                                        <th style="font-size:20px; color:#385D3D; background-color:#839B85;" colspan="6">Upcoming Trips</th>
-                                    </tr>
                                     <tr>
                                         <th>Date</th>
                                         <th>Destination</th>
