@@ -15,7 +15,7 @@ app.secret_key = secrets.token_hex(32)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
-app.config['MYSQL_DB'] = 'silerdawncoachesdb'
+app.config['MYSQL_DB'] = 'silverdawncoaches'
 
 mysql = MySQL(app)
 
@@ -222,7 +222,7 @@ def access():
                                     coaches=coaches)
         
         if adminAction == "finance":
-            cursor.execute("SELECT * FROM silerdawncoachesdb.destination")
+            cursor.execute("SELECT * FROM silverdawncoaches.destination")
             financeArray = cursor.fetchall()
 
             finaceTrip = session.get('finaceTrip')
@@ -342,7 +342,7 @@ def finance():
 
         # Fetch destination details
         cursor.execute('''
-            SELECT * FROM silerdawncoachesdb.destination WHERE DestinationID = %s;
+            SELECT * FROM silverdawncoaches.destination WHERE DestinationID = %s;
         ''', (finaceTrip,))
         destinationInfo = cursor.fetchone()
 
