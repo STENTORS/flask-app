@@ -112,7 +112,6 @@
                                     <!-- Dates from JavaScript -->
                                 </select>
                             
-                           
                                 <button type="submit">Search</button>
                             </div>
                         </form>
@@ -128,6 +127,7 @@
                                             <th>Email</th>
                                             <th>Phone Number</th>
                                             <th>Special Request</th>
+                                            <th>Seats Booked</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -138,6 +138,7 @@
                                                 <td>{{ passenger['Email'] }}</td>
                                                 <td>{{ passenger['Phone Number'] }}</td>
                                                 <td>{{ passenger['Special Request'] }}</td>
+                                                <td>{{ passenger['seats_booked'] }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>

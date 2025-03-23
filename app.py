@@ -15,7 +15,7 @@ app.secret_key = secrets.token_hex(32)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
-app.config['MYSQL_DB'] = 'silverdawncoaches'
+app.config['MYSQL_DB'] = 'silerdawncoachesdb'
 
 mysql = MySQL(app)
 
@@ -222,7 +222,7 @@ def access():
                                     coaches=coaches)
         
         if adminAction == "finance":
-            cursor.execute("SELECT * FROM silverdawncoaches.destination")
+            cursor.execute("SELECT * FROM silerdawncoachesdb.destination")
             financeArray = cursor.fetchall()
 
             finaceTrip = session.get('finaceTrip')
@@ -342,7 +342,7 @@ def finance():
 
         # Fetch destination details
         cursor.execute('''
-            SELECT * FROM silverdawncoaches.destination WHERE DestinationID = %s;
+            SELECT * FROM silerdawncoachesdb.destination WHERE DestinationID = %s;
         ''', (finaceTrip,))
         destinationInfo = cursor.fetchone()
 
@@ -754,9 +754,9 @@ def tripPassengersLookup():
     tripDestination = request.form.get('tripDestination')
     tripDate = request.form.get('tripDate')
 
-    # Fetch passenger details for the selected trip
+    # Fetch passenger details for the selected trip, including the number of seats booked
     cursor.execute("""
-        SELECT c.`First Name`, c.Surname, c.Email, c.`Phone Number`, b.`Special Request`
+        SELECT c.`First Name`, c.Surname, c.Email, c.`Phone Number`, b.`Special Request`, b.`Number of people` AS seats_booked
         FROM booking b
         JOIN customer c ON b.CustomerID = c.CustomerID
         JOIN trip t ON b.TripID = t.TripID
