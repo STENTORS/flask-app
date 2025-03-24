@@ -417,8 +417,12 @@ def getDateBooking():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         trip = request.args.get('trip')
         
-        # Get all available dates for the selected trip
-        cursor.execute("SELECT Date, TripID FROM trip WHERE DestinationID = %s", (trip,))
+        # Get all available dates for the selected trip that are in the future
+        cursor.execute("""
+            SELECT Date, TripID 
+            FROM trip 
+            WHERE DestinationID = %s AND STR_TO_DATE(Date, '%%d/%%m/%%Y') >= CURDATE()
+        """, (trip,))
         bookingSelectedInfo = cursor.fetchall()
 
         # Get the destination name
@@ -427,7 +431,8 @@ def getDateBooking():
 
         # Get total seats for the coach assigned to the trip
         cursor.execute("""
-            SELECT coach.Seats, trip.TripID FROM coach 
+            SELECT coach.Seats, trip.TripID 
+            FROM coach 
             INNER JOIN trip ON coach.CoachID = trip.CoachID 
             WHERE trip.DestinationID = %s
         """, (trip,))
