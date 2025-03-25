@@ -148,7 +148,6 @@ def trip():
         cursor.execute("SHOW TABLES")
         tables = cursor.fetchall()
 
-
         cursor.execute(f'SELECT DestinationID, Destination FROM destination;')
         destinations = cursor.fetchall()
         
@@ -158,12 +157,16 @@ def trip():
         cursor.execute(f'SELECT * FROM coach;')
         coach = cursor.fetchall()
 
+        # Get the current date in the format YYYY-MM-DD
+        current_date = datetime.now().strftime('%Y-%m-%d')
+
         return render_template("new_trip.html",
                                 title="New Trip",
                                 tables=tables,
                                 destinations=destinations, 
                                 driver=driver, 
-                                coach=coach)
+                                coach=coach,
+                                current_date=current_date)
     finally:
         cursor.close()
 
@@ -292,24 +295,45 @@ def add():
     attributes = cursor.fetchall()[1:]  # Exclude the primary key (first column)
     columnNames = [col['Field'] for col in attributes]
 
+    msg = None
+
     if request.method == "POST":
         records = []
         for col in columnNames:
             record = request.form.get(col)
-            print(col, record)
+
+            # Skip validation for the "Hotel" field under the "destination" table
+            if tableForm == "destination" and col == "Hotel":
+                records.append(record)  # Allow empty value for "Hotel"
+                continue
+
+            # Validate other fields
+            if not record:
+                msg = f"{col} is required."
+                return render_template("access_tab.html",
+                                       title="Admin | Edit",
+                                       tables=tables,
+                                       action=action,
+                                       attributes=attributes,
+                                       tableForm=tableForm,
+                                       msg=msg)
+
             records.append(record)
+
         placeholders = ', '.join(['%s'] * len(columnNames))
         columns = ', '.join([f"`{col}`" for col in columnNames])
         query = f"INSERT INTO `{tableForm}` ({columns}) VALUES ({placeholders})"
         cursor.execute(query, records)
         mysql.connection.commit()
+        msg = f"Record added successfully to {tableForm}!"
 
     return render_template("access_tab.html",
                            title="Admin | Edit",
                            tables=tables,
                            action=action,
                            attributes=attributes,
-                           tableForm=tableForm)
+                           tableForm=tableForm,
+                           msg=msg)
 
 
 @app.route('/delete', methods=['GET'])
@@ -526,9 +550,7 @@ def booking():
                 cursor.execute(query, (dateForm, nameID, tripID, selectedSeats, notes))
                 mysql.connection.commit()
                 msg = "Booking Added!"
-        else:
-            msg = "Trip does not exist for the selected destination and date."
-
+       
     return render_template('booking_tab.html',
                            destinations=destinations,
                            names=names,

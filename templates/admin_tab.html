@@ -79,6 +79,27 @@
 						<a href="?dismiss=true" class="close-btn">x</a>
 					</div>
 				{% endif %}
+				{% if action == "add" %}
+					<form method="POST" action="add">
+						{% for i in attributes %}
+							<div class="formbox">
+								<label for="{{i['Field']}}">{{i['Field']}}</label>
+								{% if tableForm == "destination" and i['Field'] == "Hotel" %}
+									<!-- Hotel field is not required -->
+									<input type="text" id="{{i['Field']}}" name="{{i['Field']}}">
+								{% else %}
+									<!-- All other fields are required -->
+									<input type="text" id="{{i['Field']}}" name="{{i['Field']}}" required>
+								{% endif %}
+							</div>
+						{% endfor %}
+						<div class="child-below">
+							<div class="formbox" style="margin-left: 1em; padding:0.5em; width: auto;">
+								<button type="submit">Submit</button>
+							</div>
+						</div>
+					</form>
+				{% endif %}
 					
 			</div>
 
